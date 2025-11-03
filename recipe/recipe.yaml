@@ -1,5 +1,5 @@
 context:
-  version: "2.8.0"
+  version: "2.8.1"
 
 package:
   name: eon
@@ -7,10 +7,10 @@ package:
 
 source:
   url: https://github.com/TheochemUI/eOn/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: ab2c30c69c699242233458a923205fff5464aca711310e31d9acb39472976a11
+  sha256: 6c81d1666b9aeb5e1db8efe57e5d5f4c05f46f03eeb003eed70344d250b58e00
 
 build:
-  number: 1
+  number: 0
   skip:
     - win
 requirements:
@@ -35,9 +35,9 @@ requirements:
     - numpy
     - pyyaml
     - setuptools
-    - libtorch >=2.7,<2.8 *cpu*
-    - libmetatomic-torch >=0.1.2,<0.2
-    - libmetatensor-torch
+    - libtorch >=2.8,<2.9 *cpu*
+    - libmetatomic-torch >=0.1,<0.2
+    - libmetatensor-torch >=0.8,<0.9
     - eigen >=3.4,<3.5
     - libblas
     - libcblas
@@ -54,7 +54,7 @@ requirements:
     - eigen
     - fmt
     - spdlog
-    - libmetatomic-torch >=0.1.2,<0.2
+    - libmetatomic-torch >=0.1,<0.2
     - libmetatensor-torch
     - if: osx
       then: llvm-openmp
