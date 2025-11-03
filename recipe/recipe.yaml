@@ -10,7 +10,7 @@ source:
   sha256: ab2c30c69c699242233458a923205fff5464aca711310e31d9acb39472976a11
 
 build:
-  number: 0
+  number: 1
   skip:
     - win
 requirements:
@@ -35,7 +35,7 @@ requirements:
     - numpy
     - pyyaml
     - setuptools
-    - libtorch >=2.7,<2.8
+    - libtorch >=2.7,<2.8 *cpu*
     - libmetatomic-torch >=0.1.2,<0.2
     - libmetatensor-torch
     - eigen >=3.4,<3.5
@@ -54,7 +54,6 @@ requirements:
     - eigen
     - fmt
     - spdlog
-    - libtorch >=2.7,<2.8
     - libmetatomic-torch >=0.1.2,<0.2
     - libmetatensor-torch
     - if: osx
