@@ -60,11 +60,17 @@ requirements:
       then: llvm-openmp
 
 tests:
-  - python:
-      imports:
-        - eon.server
+  - script:
+      - python -c "import eon.server"
+    requirements:
+      run:
+        - libtorch *cpu*
   - script:
       - eonclient -h
+    requirements:
+      run:
+        - libtorch *cpu*
+
 
 about:
   homepage: https://eondocs.org/
