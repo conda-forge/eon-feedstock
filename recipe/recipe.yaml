@@ -46,8 +46,8 @@ requirements:
     - libcblas
     - liblapack
     - liblapacke
-    - fmt >=12
-    - spdlog >=1.16
+    - fmt
+    - spdlog
     - if: osx
       then: llvm-openmp
   run:
