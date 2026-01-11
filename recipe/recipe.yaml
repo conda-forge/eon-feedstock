@@ -35,7 +35,8 @@ requirements:
     - numpy
     - pyyaml
     - setuptools
-    - libtorch >=2.9,<2.10 *cpu*
+    - libtorch
+    - libtorch *cpu*
     - libmetatomic-torch >=0.1.7,<0.2
     - libmetatensor-torch >=0.8,<0.9
     - eigen >=3.4,<3.5
@@ -43,8 +44,8 @@ requirements:
     - libcblas
     - liblapack
     - liblapacke
-    - fmt >=12
-    - spdlog >=1.16
+    - fmt
+    - spdlog
     - if: osx
       then: llvm-openmp
   run:
