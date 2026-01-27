@@ -1,13 +1,13 @@
 context:
-  version: "2.8.2"
+  version: "2.9.0"
 
 package:
   name: eon
   version: ${{ version }}
 
 source:
-  url: https://github.com/TheochemUI/eOn/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: 28e724cb481d20d07f0c924055fe126692f9607b61a6d6c2d88795e116513745
+  url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
+  sha256: dcaa7af1a020c3968bad022ac38b265a0410b4b1183c7058400cf6c29e67394e
 
 build:
   number: 0
