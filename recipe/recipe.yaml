@@ -67,12 +67,12 @@ tests:
       - python -c "import eon.server"
     requirements:
       run:
-        - libtorch
+        - libtorch *cpu*
   - script:
       - eonclient -h
     requirements:
       run:
-        - libtorch
+        - libtorch *cpu*
 
 
 about:
