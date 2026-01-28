@@ -10,7 +10,7 @@ source:
   sha256: dcaa7af1a020c3968bad022ac38b265a0410b4b1183c7058400cf6c29e67394e
 
 build:
-  number: 0
+  number: 1
   skip:
     - win
 requirements:
@@ -35,7 +35,10 @@ requirements:
     - numpy
     - pyyaml
     - setuptools
-    - libtorch >=2.9,<2.10 *cpu*
+    # build against CPU, CUDA at runtime
+    # with linker trick
+    - libtorch *cpu*
+    - libtorch
     - libmetatomic-torch >=0.1.7,<0.2
     - libmetatensor-torch >=0.8,<0.9
     - eigen >=3.4,<3.5
@@ -64,12 +67,12 @@ tests:
       - python -c "import eon.server"
     requirements:
       run:
-        - libtorch *cpu*
+        - libtorch
   - script:
       - eonclient -h
     requirements:
       run:
-        - libtorch *cpu*
+        - libtorch
 
 
 about:
