@@ -17,6 +17,7 @@ lib /DEF:xtb.def /OUT:"%LIBRARY_LIB%\xtb.lib" /MACHINE:X64
 if errorlevel 1 exit 1
 
 meson setup -Dpython.install_env=prefix ^
+    --prefix="%PREFIX%" ^
     --default-library=static ^
     -Dwith_metatomic=True ^
     -Dwith_xtb=True ^
@@ -24,7 +25,11 @@ meson setup -Dpython.install_env=prefix ^
     -Dwith_cuh2=false ^
     -Dpip_metatomic=False ^
     -Dtorch_path="%LIBRARY_PREFIX%" ^
-    %MESON_ARGS% build
+    --pkg-config-path="%LIBRARY_LIB%\pkgconfig" ^
+    --cmake-prefix-path="%LIBRARY_PREFIX%" ^
+    --buildtype=release ^
+    --wrap-mode=nofallback ^
+    build
 if errorlevel 1 exit 1
 
 meson compile -C build -v
