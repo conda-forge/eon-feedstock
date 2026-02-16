@@ -1,0 +1,13 @@
+diff --git a/client/get_version.py b/client/get_version.py
+index 6e71d1c..0422a65 100644
+--- a/client/get_version.py
++++ b/client/get_version.py
+@@ -21,7 +21,7 @@ def get_git_version():
+
+
+ def get_build_date():
+-    return datetime.datetime.now(datetime.UTC).strftime("%a %b %d %I:%M:%S %p GMT %Y")
++    return datetime.datetime.now(datetime.timezone.utc).strftime("%a %b %d %I:%M:%S %p GMT %Y")
+
+
+ def main():
