@@ -16,7 +16,8 @@ requirements:
     - ${{ compiler('c') }}
     - ${{ stdlib('c') }}
     - ${{ compiler('cxx') }}
-    - ${{ compiler('fortran') }}
+    - if: unix
+      then: ${{ compiler('fortran') }}
     - cmake
     - ninja
     - meson
@@ -41,12 +42,10 @@ requirements:
     - libmetatensor-torch >=0.8,<0.9
     - xtb
     - eigen >=3.4,<3.5
-    - if: not win
-      then:
-        - libblas
-        - libcblas
-        - liblapack
-        - liblapacke
+    - libblas
+    - libcblas
+    - liblapack
+    - liblapacke
     - fmt
     - spdlog
     - if: osx

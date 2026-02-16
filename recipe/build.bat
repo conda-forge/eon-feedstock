@@ -4,7 +4,7 @@ meson setup -Dpython.install_env=prefix ^
     --default-library=static ^
     -Dwith_metatomic=True ^
     -Dwith_xtb=True ^
-    -Dwith_cuh2=True ^
+    -Dwith_fortran=false ^
     -Dpip_metatomic=False ^
     -Dtorch_path="%PREFIX%" ^
     %MESON_ARGS% build
