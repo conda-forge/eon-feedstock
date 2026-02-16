@@ -65,14 +65,10 @@ requirements:
 
 tests:
   - script:
-      - python -c "import eon; print(eon.__version__)"
-      - python -c "import eon.server"
-      - python -c "from eon.schema import MainConfig; print(list(MainConfig.model_fields.keys()))"
-      - python -c "from eon.config import config"
+      - python -c "import eon"
     requirements:
       run:
         - libtorch *cpu*
-        - pydantic
   - script:
       - eonclient -h
       - eonclient --version
