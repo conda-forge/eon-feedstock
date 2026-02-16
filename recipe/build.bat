@@ -5,6 +5,17 @@
 del /q subprojects\xtb.wrap 2>nul
 del /q subprojects\vesin.wrap 2>nul
 
+:: Generate MSVC-compatible import library from MinGW-built xtb DLL
+:: The xtb conda package is built with m2w64 and only ships libxtb.dll.a
+dumpbin /EXPORTS "%LIBRARY_BIN%\libxtb-6.dll" > xtb_exports.txt
+echo LIBRARY libxtb-6.dll > xtb.def
+echo EXPORTS >> xtb.def
+for /f "skip=19 tokens=4" %%A in (xtb_exports.txt) do (
+    if not "%%A"=="" echo     %%A >> xtb.def
+)
+lib /DEF:xtb.def /OUT:"%LIBRARY_LIB%\xtb.lib" /MACHINE:X64
+if errorlevel 1 exit 1
+
 meson setup -Dpython.install_env=prefix ^
     --default-library=static ^
     -Dwith_metatomic=True ^
