@@ -11,13 +11,14 @@ source:
 
 build:
   number: 0
+  skip:
+    - win
 requirements:
   build:
     - ${{ compiler('c') }}
     - ${{ stdlib('c') }}
     - ${{ compiler('cxx') }}
-    - if: unix
-      then: ${{ compiler('fortran') }}
+    - ${{ compiler('fortran') }}
     - cmake
     - ninja
     - meson
