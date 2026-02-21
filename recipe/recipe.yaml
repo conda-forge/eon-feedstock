@@ -10,10 +10,8 @@ source:
   sha256: dcaa7af1a020c3968bad022ac38b265a0410b4b1183c7058400cf6c29e67394e
   patches:
     - fix-datetime-utc-py310.patch
-    - fix-fortran-xtb-decouple.patch
     - fix-vla-msvc.patch
-    - fix-libtorch-win.patch
-    - fix-metatensor-win.patch
+    - fix-windows-meson.patch
 
 build:
   number: 1
