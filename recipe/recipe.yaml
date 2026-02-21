@@ -14,7 +14,7 @@ source:
     - fix-vla-msvc.patch
 
 build:
-  number: 2
+  number: 3
 requirements:
   build:
     - ${{ compiler('c') }}
