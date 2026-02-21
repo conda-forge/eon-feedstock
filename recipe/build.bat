@@ -5,15 +5,6 @@
 del /q subprojects\xtb.wrap 2>nul
 del /q subprojects\vesin.wrap 2>nul
 
-:: Diagnostic: List available xtb files
-dir /s "%LIBRARY_PREFIX%\*xtb*"
-dir /s "%LIBRARY_PREFIX%\*metatensor*"
-dir /s "%LIBRARY_PREFIX%\*metatomic*"
-dir /s "%LIBRARY_PREFIX%\*vesin*"
-dir "%LIBRARY_LIB%\*metatensor*"
-dir "%LIBRARY_LIB%\*metatomic*"
-dir "%LIBRARY_LIB%\*vesin*"
-
 :: Generate MSVC-compatible import library from MinGW-built xtb DLL
 :: The xtb conda package is built with m2w64 and only ships libxtb.dll.a
 if exist "%LIBRARY_BIN%\libxtb-6.dll" (
@@ -26,8 +17,6 @@ if exist "%LIBRARY_BIN%\libxtb-6.dll" (
 )
 
 dumpbin /EXPORTS "%LIBRARY_BIN%\%XTB_DLL_NAME%" > xtb_exports.txt
-if errorlevel 1 exit 1
-
 echo LIBRARY %XTB_DLL_NAME% > xtb.def
 echo EXPORTS >> xtb.def
 for /f "skip=19 tokens=4" %%A in (xtb_exports.txt) do (

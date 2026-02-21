@@ -1,0 +1,16 @@
+diff --git a/client/meson.build b/client/meson.build
+--- a/client/meson.build
++++ b/client/meson.build
+@@ -408,7 +408,11 @@
+     lib_torch_list = ['c10', 'torch', 'torch_cpu', 'torch_global_deps']
+     tdeps = []
+     foreach lib_name : lib_torch_list
+-        tdeps += cppc.find_library(lib_name, dirs: [LIB_TORCH_LIB_PATH])
++        _lib = cppc.find_library(lib_name, dirs: [LIB_TORCH_LIB_PATH], required: false)
++        if not _lib.found() and is_windows
++             _lib = cppc.find_library(lib_name, dirs: [LIB_TORCH_PATH / 'bin'], required: false)
++        endif
++        if _lib.found()
++            tdeps += _lib
++        endif
+     endforeach

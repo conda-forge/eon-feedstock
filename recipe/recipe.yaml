@@ -12,10 +12,10 @@ source:
     - fix-datetime-utc-py310.patch
     - fix-fortran-xtb-decouple.patch
     - fix-vla-msvc.patch
-    - fix-inifile-underflow.patch
+    - fix-libtorch-win.patch
 
 build:
-  number: 6
+  number: 1
 requirements:
   build:
     - ${{ compiler('c') }}
