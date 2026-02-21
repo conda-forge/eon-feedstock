@@ -14,7 +14,7 @@ source:
     - fix-vla-msvc.patch
 
 build:
-  number: 3
+  number: 4
 requirements:
   build:
     - ${{ compiler('c') }}
@@ -43,7 +43,9 @@ requirements:
     # with linker trick
     - libtorch *cpu*
     - libtorch
+    - libmetatomic
     - libmetatomic-torch >=0.1.7,<0.2
+    - libmetatensor
     - libmetatensor-torch >=0.8,<0.9
     - xtb
     - eigen >=3.4,<3.5
