@@ -1,0 +1,17 @@
+diff --git a/client/INIFile.cpp b/client/INIFile.cpp
+--- a/client/INIFile.cpp
++++ b/client/INIFile.cpp
+@@ -46,9 +46,9 @@
+ 
+     string line(buff);
+ 
+-    if (line[line.length() - 1] == '
+')
++    if (!line.empty() && line[line.length() - 1] == '
+')
+       line = line.substr(0, line.length() - 1);
+ #ifdef IS_WINDOWS
+-    if (line[line.length() - 1] == '')
++    if (!line.empty() && line[line.length() - 1] == '')
+       line = line.substr(0, line.length() - 1);
+ #endif
