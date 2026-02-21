@@ -10,13 +10,11 @@ source:
   sha256: dcaa7af1a020c3968bad022ac38b265a0410b4b1183c7058400cf6c29e67394e
   patches:
     - fix-datetime-utc-py310.patch
-    - fix-fortran-xtb-decouple.patch
     - fix-vla-msvc.patch
+    - fix-windows-meson.patch
 
 build:
-  number: 0
-  skip:
-    - win
+  number: 1
 requirements:
   build:
     - ${{ compiler('c') }}
@@ -46,6 +44,7 @@ requirements:
     - libtorch *cpu*
     - libtorch
     - libmetatomic-torch >=0.1.7,<0.2
+    - libmetatensor
     - libmetatensor-torch >=0.8,<0.9
     - xtb
     - eigen >=3.4,<3.5

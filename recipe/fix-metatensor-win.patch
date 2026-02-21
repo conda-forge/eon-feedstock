@@ -1,0 +1,48 @@
+diff --git a/client/meson.build b/client/meson.build
+--- a/client/meson.build
++++ b/client/meson.build
+@@ -482,11 +482,23 @@
+         )
+         # Try system dependency() first (pkg-config / cmake), fall back to find_library
+         # xref: https://github.com/metatensor/metatensor/issues/930
+-        vesin_dep = dependency('vesin', required: false)
++        vesin_dep = dependency('vesin', required: false, method: 'pkg-config')
+         if not vesin_dep.found()
+             vesin_dep = cppc.find_library('vesin', required: false)
+         endif
+-        mts_dep = dependency('metatensor_torch', required: false)
++        if not vesin_dep.found() and is_windows
++            vesin_dep = cppc.find_library('libvesin', required: false)
++        endif
++
++        mts_dep = dependency('metatensor_torch', required: false, method: 'pkg-config')
++        if not mts_dep.found()
++            mts_dep = dependency('metatensor-torch', required: false, method: 'pkg-config')
++        endif
++        if not mts_dep.found()
++            mts_dep = dependency('metatensor_torch', required: false, method: 'cmake')
++        endif
++
+         if not mts_dep.found()
+-            mts_dep = [
+-                cppc.find_library('metatensor'),
+-                cppc.find_library('metatensor_torch'),
+-                cppc.find_library('metatomic_torch'),
+-            ]
++            _lib_names = ['metatensor', 'metatensor_torch', 'metatomic_torch']
++            _found_libs = []
++            foreach _ln : _lib_names
++                _l = cppc.find_library(_ln, required: false)
++                if not _l.found() and is_windows
++                    _l = cppc.find_library('lib' + _ln, required: false)
++                endif
++                if not _l.found()
++                    # Last resort, try without required: false to get a proper error if still missing
++                    _l = cppc.find_library(_ln, required: true)
++                endif
++                _found_libs += [_l]
++            endforeach
++            mts_dep = _found_libs
+         else
+             mts_dep = [
+                 mts_dep,
