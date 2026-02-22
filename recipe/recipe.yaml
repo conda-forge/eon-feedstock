@@ -1,5 +1,5 @@
 context:
-  version: "2.10.1"
+  version: "2.10.2"
 
 package:
   name: eon
@@ -7,16 +7,12 @@ package:
 
 source:
   url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-  sha256: dcaa7af1a020c3968bad022ac38b265a0410b4b1183c7058400cf6c29e67394e
+  sha256: 3ae944b67cfaff74714e59fc8d85e10596f7136b31b2103720d2a88910abc186
   patches:
-    - fix-datetime-utc-py310.patch
-    - fix-fortran-xtb-decouple.patch
-    - fix-vla-msvc.patch
+    - fix-torch-global-deps-win.patch
 
 build:
   number: 0
-  skip:
-    - win
 requirements:
   build:
     - ${{ compiler('c') }}
@@ -46,6 +42,7 @@ requirements:
     - libtorch *cpu*
     - libtorch
     - libmetatomic-torch >=0.1.7,<0.2
+    - libmetatensor
     - libmetatensor-torch >=0.8,<0.9
     - xtb
     - eigen >=3.4,<3.5

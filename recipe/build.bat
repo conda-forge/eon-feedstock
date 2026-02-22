@@ -7,8 +7,21 @@ del /q subprojects\vesin.wrap 2>nul
 
 :: Generate MSVC-compatible import library from MinGW-built xtb DLL
 :: The xtb conda package is built with m2w64 and only ships libxtb.dll.a
-dumpbin /EXPORTS "%LIBRARY_BIN%\libxtb-6.dll" > xtb_exports.txt
-echo LIBRARY libxtb-6.dll > xtb.def
+:: Find the DLL: try versioned libxtb-*.dll first, then unversioned libxtb.dll
+set "XTB_DLL_NAME="
+for %%F in ("%LIBRARY_BIN%\libxtb-*.dll") do (
+    if not defined XTB_DLL_NAME set "XTB_DLL_NAME=%%~nxF"
+)
+if not defined XTB_DLL_NAME (
+    if exist "%LIBRARY_BIN%\libxtb.dll" (
+        set "XTB_DLL_NAME=libxtb.dll"
+    ) else (
+        echo ERROR: Cannot find xtb DLL in %LIBRARY_BIN%
+        exit 1
+    )
+)
+dumpbin /EXPORTS "%LIBRARY_BIN%\%XTB_DLL_NAME%" > xtb_exports.txt
+echo LIBRARY %XTB_DLL_NAME% > xtb.def
 echo EXPORTS >> xtb.def
 for /f "skip=19 tokens=4" %%A in (xtb_exports.txt) do (
     if not "%%A"=="" echo     %%A >> xtb.def
