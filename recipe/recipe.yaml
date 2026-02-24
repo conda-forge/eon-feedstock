@@ -1,5 +1,5 @@
 context:
-  version: "2.10.2"
+  version: "2.11.0"
 
 package:
   name: eon
@@ -7,9 +7,7 @@ package:
 
 source:
   url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-  sha256: 3ae944b67cfaff74714e59fc8d85e10596f7136b31b2103720d2a88910abc186
-  patches:
-    - fix-torch-global-deps-win.patch
+  sha256: 61a2e9ce4a0b1993b00978b7bd2dc8d6807ac19f020a0163fac87599b67e18c2
 
 build:
   number: 0
