@@ -34,6 +34,7 @@ meson setup -Dpython.install_env=prefix ^
     --default-library=static ^
     -Dwith_metatomic=True ^
     -Dwith_xtb=True ^
+    -Dwith_serve=True ^
     -Dwith_fortran=false ^
     -Dwith_cuh2=false ^
     -Dpip_metatomic=False ^

@@ -1,13 +1,16 @@
 context:
-  version: "2.11.0"
+  version: "2.11.1"
 
 package:
   name: eon
   version: ${{ version }}
 
 source:
-  url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-  sha256: 61a2e9ce4a0b1993b00978b7bd2dc8d6807ac19f020a0163fac87599b67e18c2
+  - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
+    sha256: 6bf6d52e0f726408828fc9bbe327ff33d71781b8d2d5e414f74d148929615485
+  - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v1.0.2.tar.gz
+    sha256: db0e204d139f4713784a554fa9b0c3aab87c9f17907c6caed1b4b8874f50dfaf
+    folder: subprojects/rgpot
 
 build:
   number: 0
@@ -58,6 +61,7 @@ requirements:
         - liblapacke
     - fmt
     - spdlog
+    - capnproto
     - if: osx
       then: llvm-openmp
   run:
@@ -67,6 +71,7 @@ requirements:
     - xtb
     - fmt
     - spdlog
+    - capnproto
     - libmetatomic-torch >=0.1.7,<0.2
     - libmetatensor-torch
     - if: osx
