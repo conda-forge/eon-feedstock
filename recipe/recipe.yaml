@@ -11,6 +11,8 @@ source:
   - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v1.0.3.tar.gz
     sha256: b46d9d6ecb0d47c621d7ec6051c19025d3254b366d4c98232168f74b75c0f7da
     target_directory: subprojects/rgpot
+    patches:
+      - fix_capnpc.patch
 
 build:
   number: 0

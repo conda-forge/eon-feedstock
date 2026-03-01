@@ -6,9 +6,6 @@ del /q subprojects\xtb.wrap 2>nul
 del /q subprojects\vesin.wrap 2>nul
 del /q subprojects\rgpot.wrap 2>nul
 
-:: Windows capnpc.EXE does not support -o; use capnp compile instead
-:: (upstream fix: OmniPotentRPC/rgpot fix/capnpc-windows)
-python %~dp0patch_capnpc.py subprojects\rgpot\CppCore\rgpot\rpc\meson.build
 
 :: Generate MSVC-compatible import library from MinGW-built xtb DLL
 :: The xtb conda package is built with m2w64 and only ships libxtb.dll.a
