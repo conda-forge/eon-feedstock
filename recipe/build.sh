@@ -6,6 +6,7 @@ set -o xtrace -o nounset -o pipefail -o errexit
 # All dependencies are provided by conda packages
 rm -f subprojects/xtb.wrap
 rm -f subprojects/vesin.wrap
+rm -f subprojects/rgpot.wrap
 
 export CXXFLAGS="${CXXFLAGS} -D_LIBCPP_DISABLE_AVAILABILITY"
 if [[ $(uname) == "Linux" ]]; then

@@ -4,6 +4,7 @@
 :: All dependencies are provided by conda packages
 del /q subprojects\xtb.wrap 2>nul
 del /q subprojects\vesin.wrap 2>nul
+del /q subprojects\rgpot.wrap 2>nul
 
 :: Generate MSVC-compatible import library from MinGW-built xtb DLL
 :: The xtb conda package is built with m2w64 and only ships libxtb.dll.a
