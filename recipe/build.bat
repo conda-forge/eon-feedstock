@@ -4,6 +4,8 @@
 :: All dependencies are provided by conda packages
 del /q subprojects\xtb.wrap 2>nul
 del /q subprojects\vesin.wrap 2>nul
+del /q subprojects\rgpot.wrap 2>nul
+
 
 :: Generate MSVC-compatible import library from MinGW-built xtb DLL
 :: The xtb conda package is built with m2w64 and only ships libxtb.dll.a
@@ -34,6 +36,7 @@ meson setup -Dpython.install_env=prefix ^
     --default-library=static ^
     -Dwith_metatomic=True ^
     -Dwith_xtb=True ^
+    -Dwith_serve=True ^
     -Dwith_fortran=false ^
     -Dwith_cuh2=false ^
     -Dpip_metatomic=False ^
