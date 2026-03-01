@@ -26,7 +26,7 @@ index 0000000..375ed04
 +if os.path.exists(old):
 +    shutil.move(old, new)
 diff --git a/CppCore/rgpot/rpc/meson.build b/CppCore/rgpot/rpc/meson.build
-index e3c7393..764472b 100644
+index e3c7393..affc4c1 100644
 --- a/CppCore/rgpot/rpc/meson.build
 +++ b/CppCore/rgpot/rpc/meson.build
 @@ -1,16 +1,18 @@
@@ -54,3 +54,20 @@ index e3c7393..764472b 100644
          '@INPUT@',
      ],
  )
+@@ -26,10 +28,16 @@ ptlrpc = library(
+     install: not meson.is_subproject(),
+ )
+
++_ptlrpc_extra_deps = [capnp_rpc_dep]
++if host_machine.system() == 'windows'
++    _ptlrpc_extra_deps += cppc.find_library('ws2_32')
++endif
++
+ ptlrpc_dep = declare_dependency(
+     link_with: ptlrpc,
+     sources: gen_rpc,
+     include_directories: _incdirs,
++    dependencies: _ptlrpc_extra_deps,
+ )
+
+ pot_bridge = library(
