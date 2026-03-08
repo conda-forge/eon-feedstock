@@ -15,7 +15,7 @@ Documentation: https://eondocs.org/index.html
 
 The EON software package contains algorithms used primarily to model the
 evolution of atomic scale systems over long time scales. This version is
-instrumented for working with Metatensor.
+built with metatomic, xtb, ASE, and serve mode support.
 
 Current build status
 ====================
