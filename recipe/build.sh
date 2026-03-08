@@ -18,10 +18,19 @@ fi
 # Ensure host python can find its own site-packages (numpy, ase)
 export PYTHONPATH="${SP_DIR}:${PYTHONPATH:-}"
 
-tee native.ini <<EOF
+if [[ "${CONDA_BUILD_CROSS_COMPILATION:-}" == "1" ]]; then
+    # Cross: host python is foreign arch, use build python
+    # cross-python patches sys.path so build python can import host packages
+    tee native.ini <<EOF
+[binaries]
+python = '${BUILD_PREFIX}/bin/python'
+EOF
+else
+    tee native.ini <<EOF
 [binaries]
 python = '${PREFIX}/bin/python'
 EOF
+fi
 
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
