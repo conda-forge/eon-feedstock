@@ -1,5 +1,5 @@
 context:
-  version: "2.11.1"
+  version: "2.12.0"
 
 package:
   name: eon
@@ -7,7 +7,7 @@ package:
 
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-    sha256: 6bf6d52e0f726408828fc9bbe327ff33d71781b8d2d5e414f74d148929615485
+    sha256: 5979027a1a8b75926b4c7096c7e62eef17d3408c8136c572b8d2e04b5fa65245
   - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v1.0.3.tar.gz
     sha256: b46d9d6ecb0d47c621d7ec6051c19025d3254b366d4c98232168f74b75c0f7da
     target_directory: subprojects/rgpot
@@ -41,6 +41,7 @@ requirements:
     - numpy
     - pyyaml
     - setuptools
+    - ase
     # build against CPU, CUDA at runtime
     # with linker trick
     - libtorch *cpu*
@@ -62,8 +63,7 @@ requirements:
         - libcblas
         - liblapack
         - liblapacke
-    - fmt
-    - spdlog
+    - quill
     - capnproto
     - if: osx
       then: llvm-openmp
@@ -71,9 +71,9 @@ requirements:
     - python
     - pyyaml
     - numpy
+    - ase
     - xtb
-    - fmt
-    - spdlog
+    - quill
     - capnproto
     - libmetatomic-torch >=0.1.7,<0.2
     - libmetatensor-torch
@@ -106,7 +106,7 @@ about:
   description: |
     The EON software package contains algorithms used primarily to model the
     evolution of atomic scale systems over long time scales. This version is
-    instrumented for working with Metatensor.
+    built with metatomic, xtb, ASE, and serve mode support.
   documentation: https://eondocs.org/index.html
   repository: https://github.com/TheochemUI/eOn
 

@@ -24,6 +24,7 @@ meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
     -Dwith_metatomic=True \
     -Dwith_xtb=True \
+    -Dwith_ase=True \
     -Dwith_serve=True \
     -Dpip_metatomic=False \
     -Dtorch_path="${PREFIX}" \
