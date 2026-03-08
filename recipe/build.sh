@@ -20,6 +20,9 @@ tee native.ini <<EOF
 python = '${PREFIX}/bin/python'
 EOF
 
+# Ensure host python can find its own site-packages (numpy, ase)
+export PYTHONPATH="${PREFIX}/lib/python${PY_VER}/site-packages:${PYTHONPATH:-}"
+
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
     -Dwith_metatomic=True \
