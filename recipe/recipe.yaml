@@ -42,6 +42,7 @@ requirements:
     - pyyaml
     - setuptools
     - ase
+    - pybind11
     # build against CPU, CUDA at runtime
     # with linker trick
     - libtorch *cpu*
