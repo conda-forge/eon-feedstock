@@ -8,6 +8,8 @@ package:
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
     sha256: 5979027a1a8b75926b4c7096c7e62eef17d3408c8136c572b8d2e04b5fa65245
+    patches:
+      - fix_vesin_const.patch
   - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v1.0.3.tar.gz
     sha256: b46d9d6ecb0d47c621d7ec6051c19025d3254b366d4c98232168f74b75c0f7da
     target_directory: subprojects/rgpot
