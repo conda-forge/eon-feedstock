@@ -15,6 +15,9 @@ if [[ $(uname) == "Linux" ]]; then
     export LDFLAGS="${LDFLAGS} -Wl,--no-as-needed,${PREFIX}/lib/libtorch.so -Wl,--as-needed"
 fi
 
+# Ensure host python can find its own site-packages (numpy)
+export PYTHONPATH="${SP_DIR}:${PYTHONPATH:-}"
+
 tee native.ini <<EOF
 [binaries]
 python = '${PREFIX}/bin/python'

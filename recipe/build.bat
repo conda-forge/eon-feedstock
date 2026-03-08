@@ -31,6 +31,9 @@ for /f "skip=19 tokens=4" %%A in (xtb_exports.txt) do (
 lib /DEF:xtb.def /OUT:"%LIBRARY_LIB%\xtb.lib" /MACHINE:X64
 if errorlevel 1 exit 1
 
+:: Ensure host python can find its own site-packages (numpy)
+set "PYTHONPATH=%SP_DIR%;%PYTHONPATH%"
+
 meson setup -Dpython.install_env=prefix ^
     --prefix="%PREFIX%" ^
     --default-library=static ^
