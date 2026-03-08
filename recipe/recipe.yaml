@@ -43,8 +43,6 @@ requirements:
     - numpy
     - pyyaml
     - setuptools
-    - ase
-    - pybind11
     # build against CPU, CUDA at runtime
     # with linker trick
     - libtorch *cpu*
@@ -74,7 +72,6 @@ requirements:
     - python
     - pyyaml
     - numpy
-    - ase
     - xtb
     - quill
     - capnproto
@@ -109,7 +106,7 @@ about:
   description: |
     The EON software package contains algorithms used primarily to model the
     evolution of atomic scale systems over long time scales. This version is
-    built with metatomic, xtb, ASE, and serve mode support.
+    built with metatomic, xtb, and serve mode support.
   documentation: https://eondocs.org/index.html
   repository: https://github.com/TheochemUI/eOn
 

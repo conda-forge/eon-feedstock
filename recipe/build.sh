@@ -15,28 +15,18 @@ if [[ $(uname) == "Linux" ]]; then
     export LDFLAGS="${LDFLAGS} -Wl,--no-as-needed,${PREFIX}/lib/libtorch.so -Wl,--as-needed"
 fi
 
-# Ensure host python can find its own site-packages (numpy, ase)
+# Ensure host python can find its own site-packages (numpy)
 export PYTHONPATH="${SP_DIR}:${PYTHONPATH:-}"
 
-if [[ "${CONDA_BUILD_CROSS_COMPILATION:-}" == "1" ]]; then
-    # Cross: host python is foreign arch, use build python
-    # cross-python patches sys.path so build python can import host packages
-    tee native.ini <<EOF
-[binaries]
-python = '${BUILD_PREFIX}/bin/python'
-EOF
-else
-    tee native.ini <<EOF
+tee native.ini <<EOF
 [binaries]
 python = '${PREFIX}/bin/python'
 EOF
-fi
 
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
     -Dwith_metatomic=True \
     -Dwith_xtb=True \
-    -Dwith_ase=True \
     -Dwith_serve=True \
     -Dpip_metatomic=False \
     -Dtorch_path="${PREFIX}" \
