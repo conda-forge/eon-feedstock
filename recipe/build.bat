@@ -1,5 +1,11 @@
 @echo on
 
+:: cbindgen has no conda-forge win-64 build; grab it via cargo into the host
+:: prefix so readcon-core's meson subproject can generate its C header.
+:: Matches the ensure_cbindgen fallback in the upstream pixi.toml.
+cargo install --root "%LIBRARY_PREFIX%" cbindgen
+if errorlevel 1 exit 1
+
 :: Remove wrap files to prevent meson from building subprojects from source
 :: All dependencies are provided by conda packages
 del /q subprojects\xtb.wrap 2>nul

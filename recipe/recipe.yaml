@@ -27,9 +27,11 @@ requirements:
     # readcon-core is a Rust meson subproject since eon v2.13; its meson.build
     # demands a rustc binary and cbindgen to generate the C header used by
     # ConFileIO.cpp. Missing either one aborts meson setup before any C++
-    # translation unit is touched.
+    # translation unit is touched. conda-forge ships no win-64 cbindgen build,
+    # so build.bat bootstraps it via `cargo install` on Windows.
     - ${{ compiler('rust') }}
-    - cbindgen
+    - if: not win
+      then: cbindgen
     - cmake
     - ninja
     - meson
