@@ -5,8 +5,11 @@ set -o xtrace -o nounset -o pipefail -o errexit
 # cbindgen is not packaged on conda-forge for any subdir; bootstrap it via
 # cargo into the build prefix so readcon-core's meson subproject can
 # generate its C header. Matches the ensure_cbindgen fallback in the
-# upstream pixi.toml.
-cargo install --root "${BUILD_PREFIX}" cbindgen
+# upstream pixi.toml. On cross builds (osx_arm64 from osx_64 hosts) cargo
+# honors CARGO_BUILD_TARGET and would build an arm64 binary that cannot
+# run on the x86_64 build machine -- drop the target locally so cargo
+# emits a build-native executable.
+(unset CARGO_BUILD_TARGET; cargo install --root "${BUILD_PREFIX}" cbindgen)
 export PATH="${BUILD_PREFIX}/bin:${PATH}"
 
 # Remove wrap files to prevent meson from building subprojects from source
@@ -59,7 +62,7 @@ fi
 
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
-    "${meson_extra_args[@]}" \
+    ${meson_extra_args[@]+"${meson_extra_args[@]}"} \
     -Dwith_metatomic=True \
     -Dwith_xtb=True \
     -Dwith_serve=True \
