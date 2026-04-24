@@ -28,6 +28,7 @@ export PYTHONPATH="${SP_DIR}:${PYTHONPATH:-}"
 tee native.ini <<EOF
 [binaries]
 python = '${PREFIX}/bin/python'
+rust = ['${BUILD_PREFIX}/bin/rustc']
 EOF
 
 # conda-forge's rust_compiler activation exports CARGO_BUILD_TARGET=<triple>,
@@ -41,8 +42,24 @@ sed -i.bak \
     subprojects/readcon-core/meson.build
 rm -f subprojects/readcon-core/meson.build.bak
 
+# On cross builds (osx_arm64 from osx_64 hosts) conda-forge passes a
+# --cross-file via MESON_ARGS but does not populate [binaries] rust in it.
+# readcon-core's `project('readcon-core', ['rust', 'c'], ...)` demands one.
+# Append our own cross-file that adds the rust binary with --target, so
+# meson resolves rustc for the host machine and cargo cross-compiles to
+# the target triple.
+meson_extra_args=()
+if [[ -n "${CARGO_BUILD_TARGET:-}" && "${build_platform:-}" != "${target_platform:-}" ]]; then
+    tee cross-rust.ini <<EOF
+[binaries]
+rust = ['${BUILD_PREFIX}/bin/rustc', '--target', '${CARGO_BUILD_TARGET}']
+EOF
+    meson_extra_args+=(--cross-file cross-rust.ini)
+fi
+
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
+    "${meson_extra_args[@]}" \
     -Dwith_metatomic=True \
     -Dwith_xtb=True \
     -Dwith_serve=True \
