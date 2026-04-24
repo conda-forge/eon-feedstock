@@ -25,13 +25,12 @@ requirements:
     - if: not win
       then: ${{ compiler('fortran') }}
     # readcon-core is a Rust meson subproject since eon v2.13; its meson.build
-    # demands a rustc binary and cbindgen to generate the C header used by
-    # ConFileIO.cpp. Missing either one aborts meson setup before any C++
-    # translation unit is touched. conda-forge ships no win-64 cbindgen build,
-    # so build.bat bootstraps it via `cargo install` on Windows.
+    # demands rustc plus cbindgen to generate the C header that ConFileIO.cpp
+    # consumes. Missing either one aborts meson setup before any C++
+    # translation unit is touched. conda-forge publishes no cbindgen binary
+    # for any subdir, so build.sh and build.bat both bootstrap it via
+    # `cargo install`, matching the ensure_cbindgen fallback in pixi.toml.
     - ${{ compiler('rust') }}
-    - if: not win
-      then: cbindgen
     - cmake
     - ninja
     - meson

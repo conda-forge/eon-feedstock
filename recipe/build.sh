@@ -2,6 +2,13 @@
 
 set -o xtrace -o nounset -o pipefail -o errexit
 
+# cbindgen is not packaged on conda-forge for any subdir; bootstrap it via
+# cargo into the build prefix so readcon-core's meson subproject can
+# generate its C header. Matches the ensure_cbindgen fallback in the
+# upstream pixi.toml.
+cargo install --root "${BUILD_PREFIX}" cbindgen
+export PATH="${BUILD_PREFIX}/bin:${PATH}"
+
 # Remove wrap files to prevent meson from building subprojects from source
 # All dependencies are provided by conda packages
 rm -f subprojects/xtb.wrap
