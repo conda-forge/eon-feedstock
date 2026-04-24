@@ -52,6 +52,13 @@ if errorlevel 1 exit 1
 python -c "import pathlib; p=pathlib.Path('subprojects/readcon-core/meson.build'); t=p.read_text(); old='\"/cargo-target/release/\"'; new='\"/cargo-target/\" + (__import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\", \"\") + \"/\" if __import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\") else \"\") + \"release/\"'; p.write_text(t.replace(old, new))"
 if errorlevel 1 exit 1
 
+:: Bundle every transitive Rust crate license that readcon-core pulls into
+:: THIRDPARTY.yml. about.license_file in recipe.yaml references this file.
+pushd subprojects\readcon-core
+cargo-bundle-licenses --format yaml --output THIRDPARTY.yml
+if errorlevel 1 (popd & exit 1)
+popd
+
 meson setup -Dpython.install_env=prefix ^
     --prefix="%PREFIX%" ^
     --default-library=static ^

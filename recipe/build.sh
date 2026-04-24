@@ -45,6 +45,10 @@ sed -i.bak \
     subprojects/readcon-core/meson.build
 rm -f subprojects/readcon-core/meson.build.bak
 
+# Bundle every transitive Rust crate license that readcon-core pulls into
+# THIRDPARTY.yml. about.license_file in recipe.yaml references this file.
+(cd subprojects/readcon-core && cargo-bundle-licenses --format yaml --output THIRDPARTY.yml)
+
 # On cross builds (osx_arm64 from osx_64 hosts) conda-forge passes a
 # --cross-file via MESON_ARGS but does not populate [binaries] rust in it.
 # readcon-core's `project('readcon-core', ['rust', 'c'], ...)` demands one.
