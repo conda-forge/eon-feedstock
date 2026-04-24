@@ -40,6 +40,18 @@ if errorlevel 1 exit 1
 :: Ensure host python can find its own site-packages (numpy)
 set "PYTHONPATH=%SP_DIR%;%PYTHONPATH%"
 
+:: inih is pulled in as a meson wrap (eon v2.14 dropped the vendored
+:: client/INIFile.* in favor of inih's INIReader); there is no conda-forge
+:: binary for any subdir so meson must be allowed to fall back to the wrap.
+:: Mirror non-Windows behavior (no --wrap-mode override).
+:: Also patch readcon-core's upstream meson.build in case the Windows
+:: rust_compiler activation sets CARGO_BUILD_TARGET (target-dir layout
+:: gains a <triple>/ component then).
+meson subprojects download readcon-core
+if errorlevel 1 exit 1
+python -c "import pathlib; p=pathlib.Path('subprojects/readcon-core/meson.build'); t=p.read_text(); old='\"/cargo-target/release/\"'; new='\"/cargo-target/\" + (__import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\", \"\") + \"/\" if __import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\") else \"\") + \"release/\"'; p.write_text(t.replace(old, new))"
+if errorlevel 1 exit 1
+
 meson setup -Dpython.install_env=prefix ^
     --prefix="%PREFIX%" ^
     --default-library=static ^
@@ -53,7 +65,6 @@ meson setup -Dpython.install_env=prefix ^
     --pkg-config-path="%LIBRARY_LIB%\pkgconfig" ^
     --cmake-prefix-path="%LIBRARY_PREFIX%" ^
     --buildtype=release ^
-    --wrap-mode=nofallback ^
     build
 if errorlevel 1 exit 1
 

@@ -30,6 +30,17 @@ tee native.ini <<EOF
 python = '${PREFIX}/bin/python'
 EOF
 
+# conda-forge's rust_compiler activation exports CARGO_BUILD_TARGET=<triple>,
+# which makes cargo emit into target-dir/<triple>/release/. Upstream
+# readcon-core's meson.build (v0.8.0) hardcodes target-dir/release/ in its
+# shutil.copy2 step and fails otherwise. Download the subproject up front and
+# rewrite the copy path to honor CARGO_BUILD_TARGET when it is set.
+meson subprojects download readcon-core
+sed -i.bak \
+    -e 's|"/cargo-target/release/"|"/cargo-target/" + (__import__("os").environ.get("CARGO_BUILD_TARGET", "") + "/" if __import__("os").environ.get("CARGO_BUILD_TARGET") else "") + "release/"|' \
+    subprojects/readcon-core/meson.build
+rm -f subprojects/readcon-core/meson.build.bak
+
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
     -Dwith_metatomic=True \
