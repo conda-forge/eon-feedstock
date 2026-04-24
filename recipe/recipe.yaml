@@ -24,6 +24,12 @@ requirements:
     - ${{ compiler('cxx') }}
     - if: not win
       then: ${{ compiler('fortran') }}
+    # readcon-core is a Rust meson subproject since eon v2.13; its meson.build
+    # demands a rustc binary and cbindgen to generate the C header used by
+    # ConFileIO.cpp. Missing either one aborts meson setup before any C++
+    # translation unit is touched.
+    - ${{ compiler('rust') }}
+    - cbindgen
     - cmake
     - ninja
     - meson
