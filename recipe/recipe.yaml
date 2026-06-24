@@ -7,9 +7,8 @@ package:
 
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-    # Recompute after tag push: curl -sL "$url" | sha256sum
-    # Placeholder from local git archive HEAD (release/v2.15.0-prep); replace with GH asset hash.
-    sha256: b873ece9340d51e926b0e2215ef9fd4438a4ecba3081159c7ed69e18f84ae345
+    # Published asset from TheochemUI/eOn v2.15.0 release.yml (git archive tarball).
+    sha256: d4695f81ffd7a1c729f48b5c42737d381c686c79ca63ca95769f31415a3798b7
     # v2.15.0+ ships runtime-loadable Fortran pots (#342); fix_win_cuh2_potinit was v2.14.0-only.
   - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v1.0.3.tar.gz
     sha256: b46d9d6ecb0d47c621d7ec6051c19025d3254b366d4c98232168f74b75c0f7da
