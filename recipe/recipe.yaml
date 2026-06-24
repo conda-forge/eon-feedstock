@@ -16,15 +16,15 @@ source:
       - fix_capnpc.patch
 
 build:
-  # Windows (issue #15): IN-TREE Fortran enabled via compiler('fortran') + build.bat
-  # -Dwith_fortran=true -Dwith_cuh2=true. Not a skip-Fortran line. Stack /STACK:16M in meson.
+  # Windows (issue #15): IN-TREE Fortran via compiler('fortran') + build.bat
+  # -Dwith_fortran=true -Dwith_cuh2=true. build.bat forces MSVC AR=lib (not llvm-ar from flang).
   number: 0
 requirements:
   build:
     - ${{ compiler('c') }}
     - ${{ stdlib('c') }}
     - ${{ compiler('cxx') }}
-    # win-64: m2w64 gfortran (no MSVC Fortran); links with MSVC C++ via static objects
+    # win-64: flang (conda-forge) or gfortran; C++/link stay MSVC; AR=lib in build.bat
     # (issue #15 in-tree pots — see build.bat + rgoswami.me/posts/windows-compat-sci-cpp/)
     - ${{ compiler('fortran') }}
     # readcon-core is a Rust meson subproject since eon v2.13; its meson.build
