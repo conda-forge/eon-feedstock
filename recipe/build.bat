@@ -76,6 +76,25 @@ if errorlevel 1 (
     exit 1
 )
 
+:: flang_rt import libs live under clang resource dir; MSVC link needs LIBPATH
+:: (LNK1104: cannot open file 'flang_rt.runtime.dynamic.lib' otherwise).
+set "FLANG_RT_DIR="
+for /f "delims=" %%R in ('flang -print-resource-dir 2^>nul') do set "FLANG_RT_DIR=%%R\lib\x86_64-pc-windows-msvc"
+if defined FLANG_RT_DIR (
+    if exist "%FLANG_RT_DIR%\flang_rt.runtime.dynamic.lib" (
+        set "LIB=%FLANG_RT_DIR%;%LIB%"
+        echo Using flang_rt LIBPATH: %FLANG_RT_DIR%
+    )
+)
+if not defined FLANG_RT_DIR (
+    for /d %%D in ("%LIBRARY_PREFIX%\lib\clang\*") do (
+        if exist "%%D\lib\x86_64-pc-windows-msvc\flang_rt.runtime.dynamic.lib" (
+            set "LIB=%%D\lib\x86_64-pc-windows-msvc;%LIB%"
+            echo Using flang_rt LIBPATH: %%D\lib\x86_64-pc-windows-msvc
+        )
+    )
+)
+
 meson subprojects download readcon-core
 if errorlevel 1 exit 1
 python -c "import pathlib; p=pathlib.Path('subprojects/readcon-core/meson.build'); t=p.read_text(); old='\"/cargo-target/release/\"'; new='\"/cargo-target/\" + (__import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\", \"\") + \"/\" if __import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\") else \"\") + \"release/\"'; p.write_text(t.replace(old, new))"
