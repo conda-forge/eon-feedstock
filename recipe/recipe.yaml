@@ -1,5 +1,5 @@
 context:
-  version: "2.14.0"
+  version: "2.15.0"
 
 package:
   name: eon
@@ -7,12 +7,10 @@ package:
 
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-    sha256: 3ac43fa2037a46bcc09e727647db504dd5ac55d4b7627f56d3a5ad6be38f765d
-    # fix_vesin_const.patch landed upstream for v2.14.0 and is no longer needed.
-    # fix_win_cuh2_potinit: v2.14.0 static aluminum+cuh2 LNK2005 on potinit_ (MSVC).
-    # Drop when retargeting to v2.15.0+ (dlopen Fortran pots on main).
-    patches:
-      - fix_win_cuh2_potinit.patch
+    # Recompute after tag push: curl -sL "$url" | sha256sum
+    # Placeholder from local git archive HEAD (release/v2.15.0-prep); replace with GH asset hash.
+    sha256: b873ece9340d51e926b0e2215ef9fd4438a4ecba3081159c7ed69e18f84ae345
+    # v2.15.0+ ships runtime-loadable Fortran pots (#342); fix_win_cuh2_potinit was v2.14.0-only.
   - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v1.0.3.tar.gz
     sha256: b46d9d6ecb0d47c621d7ec6051c19025d3254b366d4c98232168f74b75c0f7da
     target_directory: subprojects/rgpot
