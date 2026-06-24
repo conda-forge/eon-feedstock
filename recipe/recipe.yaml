@@ -16,14 +16,17 @@ source:
       - fix_capnpc.patch
 
 build:
+  # Windows (issue #15): IN-TREE Fortran enabled via compiler('fortran') + build.bat
+  # -Dwith_fortran=true -Dwith_cuh2=true. Not a skip-Fortran line. Stack /STACK:16M in meson.
   number: 0
 requirements:
   build:
     - ${{ compiler('c') }}
     - ${{ stdlib('c') }}
     - ${{ compiler('cxx') }}
-    - if: not win
-      then: ${{ compiler('fortran') }}
+    # win-64: m2w64 gfortran (no MSVC Fortran); links with MSVC C++ via static objects
+    # (issue #15 in-tree pots — see build.bat + rgoswami.me/posts/windows-compat-sci-cpp/)
+    - ${{ compiler('fortran') }}
     # readcon-core is a Rust meson subproject since eon v2.13; its meson.build
     # demands rustc plus cbindgen to generate the C header that ConFileIO.cpp
     # consumes. Missing either one aborts meson setup before any C++
@@ -102,6 +105,8 @@ tests:
       script:
         - eonclient -h
         - eonclient --version
+        # Windows builds are static + no in-tree Fortran; binary must still run.
+        - python -c "import eon; import sys; print('eon ok', sys.platform)"
       requirements:
         run:
           - libtorch *cpu*
