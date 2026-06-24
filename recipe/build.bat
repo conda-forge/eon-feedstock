@@ -10,11 +10,27 @@
 ::   - MinGW-built xtb: generate MSVC import lib from DLL exports (ABI boundary)
 ::   - Stack: meson sets /STACK:16777216 for MSVC link (Windows 1 MB default overflows
 ::     legacy Fortran stack arrays; Linux default is 8 MB)
+:: Cargo: HTTP/1.1 + retries (crates.io HTTP2 framing fails on some runners, incl. aarch64).
+
+set "CARGO_HTTP_MULTIPLEXING=false"
+set "CARGO_NET_RETRY=10"
+set "CARGO_HTTP_TIMEOUT=300"
 
 :: cbindgen has no conda-forge win-64 build; grab it via cargo into the host
 :: prefix so readcon-core's meson subproject can generate its C header.
+set "CARGO_ATTEMPT=0"
+:cargo_install_cbindgen
+set /a CARGO_ATTEMPT+=1
 cargo install --root "%LIBRARY_PREFIX%" cbindgen
-if errorlevel 1 exit 1
+if errorlevel 1 (
+    if %CARGO_ATTEMPT% GEQ 5 (
+        echo ERROR: cargo install cbindgen failed after %CARGO_ATTEMPT% attempts
+        exit 1
+    )
+    echo WARN: cargo install cbindgen attempt %CARGO_ATTEMPT% failed; retrying...
+    timeout /t 10 /nobreak >nul
+    goto cargo_install_cbindgen
+)
 
 :: Remove wrap files to prevent meson from building subprojects from source
 del /q subprojects\xtb.wrap 2>nul
@@ -66,8 +82,33 @@ python -c "import pathlib; p=pathlib.Path('subprojects/readcon-core/meson.build'
 if errorlevel 1 exit 1
 
 pushd subprojects\readcon-core
+set "CARGO_ATTEMPT=0"
+:cargo_fetch_readcon
+set /a CARGO_ATTEMPT+=1
+cargo fetch --locked
+if errorlevel 1 cargo fetch
+if errorlevel 1 (
+    if %CARGO_ATTEMPT% GEQ 5 (
+        echo ERROR: cargo fetch readcon-core failed after %CARGO_ATTEMPT% attempts
+        popd & exit 1
+    )
+    echo WARN: cargo fetch attempt %CARGO_ATTEMPT% failed; retrying...
+    timeout /t 10 /nobreak >nul
+    goto cargo_fetch_readcon
+)
+set "CARGO_ATTEMPT=0"
+:cargo_bundle_licenses
+set /a CARGO_ATTEMPT+=1
 cargo-bundle-licenses --format yaml --output THIRDPARTY.yml
-if errorlevel 1 (popd & exit 1)
+if errorlevel 1 (
+    if %CARGO_ATTEMPT% GEQ 5 (
+        echo ERROR: cargo-bundle-licenses failed after %CARGO_ATTEMPT% attempts
+        popd & exit 1
+    )
+    echo WARN: cargo-bundle-licenses attempt %CARGO_ATTEMPT% failed; retrying...
+    timeout /t 10 /nobreak >nul
+    goto cargo_bundle_licenses
+)
 popd
 
 :: In-tree Fortran ON including CuH2 (issue #15). Static default-library; MSVC AR above.

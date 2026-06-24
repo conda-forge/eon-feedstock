@@ -35,7 +35,9 @@ requirements:
     # `cargo install`, matching the ensure_cbindgen fallback in pixi.toml.
     - ${{ compiler('rust') }}
     # Required by conda-forge policy for Rust packages: bundle the licenses
-    # of every transitive Rust dependency into THIRDPARTY.yml.
+    # of every transitive Rust dependency into THIRDPARTY.yml. build.sh/bat
+    # set CARGO_HTTP_MULTIPLEXING=false + retries (crates.io HTTP2 flakes on
+    # linux_aarch64 runners kill cargo-bundle-licenses otherwise).
     - cargo-bundle-licenses
     - cmake
     - ninja

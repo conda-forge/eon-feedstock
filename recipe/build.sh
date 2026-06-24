@@ -2,6 +2,32 @@
 
 set -o xtrace -o nounset -o pipefail -o errexit
 
+# crates.io / curl on some runners (esp. linux_aarch64 GHA) fails with
+# "Error in the HTTP2 framing layer" during cargo install / cargo-bundle-licenses.
+# HTTP/1.1 + retries makes aarch64 (and win) builds reliable without vendoring.
+export CARGO_HTTP_MULTIPLEXING="${CARGO_HTTP_MULTIPLEXING:-false}"
+export CARGO_NET_RETRY="${CARGO_NET_RETRY:-10}"
+export CARGO_HTTP_TIMEOUT="${CARGO_HTTP_TIMEOUT:-300}"
+
+# Retry a command up to N times with backoff (network to crates.io is flaky on aarch64).
+cargo_retry() {
+    local max="${1:-5}"
+    shift
+    local attempt=1
+    local delay=5
+    until "$@"; do
+        if [[ "${attempt}" -ge "${max}" ]]; then
+            echo "ERROR: command failed after ${max} attempts: $*" >&2
+            return 1
+        fi
+        echo "WARN: attempt ${attempt}/${max} failed; retrying in ${delay}s: $*" >&2
+        sleep "${delay}"
+        attempt=$((attempt + 1))
+        delay=$((delay * 2))
+        if [[ "${delay}" -gt 60 ]]; then delay=60; fi
+    done
+}
+
 # cbindgen is not packaged on conda-forge for any subdir; bootstrap it via
 # cargo into the build prefix so readcon-core's meson subproject can
 # generate its C header. Matches the ensure_cbindgen fallback in the
@@ -9,7 +35,10 @@ set -o xtrace -o nounset -o pipefail -o errexit
 # honors CARGO_BUILD_TARGET and would build an arm64 binary that cannot
 # run on the x86_64 build machine -- drop the target locally so cargo
 # emits a build-native executable.
-(unset CARGO_BUILD_TARGET; cargo install --root "${BUILD_PREFIX}" cbindgen)
+(
+    unset CARGO_BUILD_TARGET
+    cargo_retry 5 cargo install --root "${BUILD_PREFIX}" cbindgen
+)
 export PATH="${BUILD_PREFIX}/bin:${PATH}"
 
 # Remove wrap files to prevent meson from building subprojects from source
@@ -45,9 +74,13 @@ sed -i.bak \
     subprojects/readcon-core/meson.build
 rm -f subprojects/readcon-core/meson.build.bak
 
-# Bundle every transitive Rust crate license that readcon-core pulls into
-# THIRDPARTY.yml. about.license_file in recipe.yaml references this file.
-(cd subprojects/readcon-core && cargo-bundle-licenses --format yaml --output THIRDPARTY.yml)
+# Warm the registry/cache then bundle licenses (policy: THIRDPARTY.yml for Rust deps).
+# cargo-bundle-licenses runs `cargo metadata` which hits crates.io; prime with fetch.
+(
+    cd subprojects/readcon-core
+    cargo_retry 5 cargo fetch --locked 2>/dev/null || cargo_retry 5 cargo fetch
+    cargo_retry 5 cargo-bundle-licenses --format yaml --output THIRDPARTY.yml
+)
 
 # On cross builds (osx_arm64 from osx_64 hosts) conda-forge passes a
 # --cross-file via MESON_ARGS but does not populate [binaries] rust in it.
