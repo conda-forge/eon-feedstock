@@ -86,6 +86,25 @@ EOF
         --pkgconfigdir lib/pkgconfig
 )
 
+# macOS: set @rpath ids on readcon dylibs in $PREFIX before meson links eonclient.
+if [[ "$(uname)" == "Darwin" ]]; then
+    fix_readcon_install_names() {
+        local target="$1"
+        [[ -f "${target}" && ! -L "${target}" ]] || return 0
+        while IFS= read -r old; do
+            [[ -z "${old}" ]] && continue
+            install_name_tool -change "${old}" "@rpath/$(basename "${old}")" "${target}" 2>/dev/null || true
+        done < <(otool -L "${target}" 2>/dev/null | awk '/libreadcon_core/ && $1 ~ /^\// {print $1}')
+    }
+    shopt -s nullglob
+    for dylib in "${PREFIX}/lib/"libreadcon_core*.dylib; do
+        [[ -L "${dylib}" ]] && continue
+        install_name_tool -id "@rpath/$(basename "${dylib}")" "${dylib}" || true
+        fix_readcon_install_names "${dylib}"
+    done
+    shopt -u nullglob
+fi
+
 export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
 export LIBRARY_PATH="${PREFIX}/lib:${LIBRARY_PATH:-}"
 export LD_LIBRARY_PATH="${PREFIX}/lib:${LD_LIBRARY_PATH:-}"
