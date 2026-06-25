@@ -1,21 +1,77 @@
 @echo on
 
-:: cbindgen has no conda-forge win-64 build; grab it via cargo into the host
-:: prefix so readcon-core's meson subproject can generate its C header.
-:: Matches the ensure_cbindgen fallback in the upstream pixi.toml.
-cargo install --root "%LIBRARY_PREFIX%" cbindgen
-if errorlevel 1 exit 1
+:: conda-forge/eon-feedstock#15: enable IN-TREE Fortran on win-64 (not skip it).
+:: Strategy (see https://rgoswami.me/posts/windows-compat-sci-cpp/):
+::   - C++/Python/torch/metatomic: MSVC (conda-forge default win-64 compilers)
+::   - In-tree Fortran pots (EAM/GAGAFE/CuH2 etc.): compiler('fortran') — currently
+::     conda-forge win ships llvm-flang; C++/link stay MSVC (cl.exe / link.exe)
+::   - Archiver: MUST be MSVC lib.exe. Enabling fortran pulls flang which otherwise
+::     selects llvm-ar; MSVC link then fails with LNK1107 on .a files (libptlrpc etc.)
+::   - MinGW-built xtb: generate MSVC import lib from DLL exports (ABI boundary)
+::   - Stack: meson sets /STACK:16777216 for MSVC link (Windows 1 MB default overflows
+::     legacy Fortran stack arrays; Linux default is 8 MB)
+:: readcon-core: offline cargo-c + vendored crates (no crates.io / github during build).
+
+set "CARGO_NET_OFFLINE=true"
+set "CARGO_HOME=%SRC_DIR%\.cargo-home"
+if not exist "%CARGO_HOME%" mkdir "%CARGO_HOME%"
+if not exist "%SRC_DIR%\readcon-vendor" (
+    echo ERROR: readcon-vendor not found under %SRC_DIR%
+    exit 1
+)
+if not exist "%SRC_DIR%\readcon-core-src" (
+    echo ERROR: readcon-core-src not found under %SRC_DIR%
+    exit 1
+)
+set "READCON_SRC=%SRC_DIR%\readcon-core-src"
+if not exist "%READCON_SRC%\Cargo.toml" (
+    for /d %%D in ("%SRC_DIR%\readcon-core-src\readcon-core-*") do (
+        if exist "%%D\Cargo.toml" set "READCON_SRC=%%D"
+    )
+)
+if not exist "%READCON_SRC%\Cargo.toml" (
+    echo ERROR: readcon-core Cargo.toml not found
+    exit 1
+)
+
+:: Write cargo offline config with absolute vendor path (Windows backslashes -> forward).
+set "READCON_VENDOR=%SRC_DIR%\readcon-vendor"
+set "READCON_VENDOR=%READCON_VENDOR:\=/%"
+> "%CARGO_HOME%\config.toml" (
+    echo [source.crates-io]
+    echo replace-with = "vendored-sources"
+    echo.
+    echo [source.vendored-sources]
+    echo directory = "%READCON_VENDOR%"
+    echo.
+    echo [net]
+    echo offline = true
+)
+
+pushd "%READCON_SRC%"
+copy /Y "%RECIPE_DIR%\readcon-core-Cargo.lock" Cargo.lock >nul
+cargo-bundle-licenses --format yaml --output "%SRC_DIR%\readcon-THIRDPARTY.yml"
+if errorlevel 1 (popd & exit 1)
+:: Install into LIBRARY_PREFIX so runtime DLLs ship with the package.
+if defined CARGO_BUILD_TARGET (
+    cargo cinstall --offline --locked --release --target "%CARGO_BUILD_TARGET%" --prefix "%LIBRARY_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+) else (
+    cargo cinstall --offline --locked --release --prefix "%LIBRARY_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+)
+if errorlevel 1 (popd & exit 1)
+popd
+
+set "PKG_CONFIG_PATH=%LIBRARY_LIB%\pkgconfig;%PKG_CONFIG_PATH%"
+set "LIB=%LIBRARY_LIB%;%LIB%"
+set "INCLUDE=%LIBRARY_INC%;%INCLUDE%"
 
 :: Remove wrap files to prevent meson from building subprojects from source
-:: All dependencies are provided by conda packages
 del /q subprojects\xtb.wrap 2>nul
 del /q subprojects\vesin.wrap 2>nul
 del /q subprojects\rgpot.wrap 2>nul
-
+del /q subprojects\readcon-core.wrap 2>nul
 
 :: Generate MSVC-compatible import library from MinGW-built xtb DLL
-:: The xtb conda package is built with m2w64 and only ships libxtb.dll.a
-:: Find the DLL: try versioned libxtb-*.dll first, then unversioned libxtb.dll
 set "XTB_DLL_NAME="
 for %%F in ("%LIBRARY_BIN%\libxtb-*.dll") do (
     if not defined XTB_DLL_NAME set "XTB_DLL_NAME=%%~nxF"
@@ -37,36 +93,51 @@ for /f "skip=19 tokens=4" %%A in (xtb_exports.txt) do (
 lib /DEF:xtb.def /OUT:"%LIBRARY_LIB%\xtb.lib" /MACHINE:X64
 if errorlevel 1 exit 1
 
-:: Ensure host python can find its own site-packages (numpy)
 set "PYTHONPATH=%SP_DIR%;%PYTHONPATH%"
 
-:: inih is pulled in as a meson wrap (eon v2.14 dropped the vendored
-:: client/INIFile.* in favor of inih's INIReader); there is no conda-forge
-:: binary for any subdir so meson must be allowed to fall back to the wrap.
-:: Mirror non-Windows behavior (no --wrap-mode override).
-:: Also patch readcon-core's upstream meson.build in case the Windows
-:: rust_compiler activation sets CARGO_BUILD_TARGET (target-dir layout
-:: gains a <triple>/ component then).
-meson subprojects download readcon-core
-if errorlevel 1 exit 1
-python -c "import pathlib; p=pathlib.Path('subprojects/readcon-core/meson.build'); t=p.read_text(); old='\"/cargo-target/release/\"'; new='\"/cargo-target/\" + (__import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\", \"\") + \"/\" if __import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\") else \"\") + \"release/\"'; p.write_text(t.replace(old, new))"
-if errorlevel 1 exit 1
+:: Keep C/C++/link on MSVC even though compiler('fortran') injects flang/llvm-ar.
+:: Without this, meson archives with llvm-ar and final MSVC link fails (LNK1107).
+set "CC=cl.exe"
+set "CXX=cl.exe"
+set "AR=lib"
+set "ARFLAGS="
+set "NM=dumpbin"
+set "RANLIB=:"
+:: Prefer MSVC link over lld-link from the flang/clang activation.
+where link >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: MSVC link.exe not on PATH; vsenv/activation missing
+    exit 1
+)
 
-:: Bundle every transitive Rust crate license that readcon-core pulls into
-:: THIRDPARTY.yml. about.license_file in recipe.yaml references this file.
-pushd subprojects\readcon-core
-cargo-bundle-licenses --format yaml --output THIRDPARTY.yml
-if errorlevel 1 (popd & exit 1)
-popd
+:: flang_rt import libs live under clang resource dir; MSVC link needs LIBPATH
+:: (LNK1104: cannot open file 'flang_rt.runtime.dynamic.lib' otherwise).
+set "FLANG_RT_DIR="
+for /f "delims=" %%R in ('flang -print-resource-dir 2^>nul') do set "FLANG_RT_DIR=%%R\lib\x86_64-pc-windows-msvc"
+if defined FLANG_RT_DIR (
+    if exist "%FLANG_RT_DIR%\flang_rt.runtime.dynamic.lib" (
+        set "LIB=%FLANG_RT_DIR%;%LIB%"
+        echo Using flang_rt LIBPATH: %FLANG_RT_DIR%
+    )
+)
+if not defined FLANG_RT_DIR (
+    for /d %%D in ("%LIBRARY_PREFIX%\lib\clang\*") do (
+        if exist "%%D\lib\x86_64-pc-windows-msvc\flang_rt.runtime.dynamic.lib" (
+            set "LIB=%%D\lib\x86_64-pc-windows-msvc;%LIB%"
+            echo Using flang_rt LIBPATH: %%D\lib\x86_64-pc-windows-msvc
+        )
+    )
+)
 
+:: In-tree Fortran ON including CuH2 (issue #15). Static default-library; MSVC AR above.
 meson setup -Dpython.install_env=prefix ^
     --prefix="%PREFIX%" ^
     --default-library=static ^
     -Dwith_metatomic=True ^
     -Dwith_xtb=True ^
     -Dwith_serve=True ^
-    -Dwith_fortran=false ^
-    -Dwith_cuh2=false ^
+    -Dwith_fortran=true ^
+    -Dwith_cuh2=true ^
     -Dpip_metatomic=False ^
     -Dtorch_path="%LIBRARY_PREFIX%" ^
     --pkg-config-path="%LIBRARY_LIB%\pkgconfig" ^
@@ -80,3 +151,5 @@ if errorlevel 1 exit 1
 
 meson install -C build
 if errorlevel 1 exit 1
+
+:: readcon DLLs/libs already under LIBRARY_PREFIX via cargo cinstall.

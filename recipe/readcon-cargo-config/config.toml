@@ -1,0 +1,10 @@
+# Offline cargo config: point crates.io at the vendored sources shipped with
+# the recipe (extracted under $SRC_DIR/readcon-vendor during the build).
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "readcon-vendor"
+
+[net]
+offline = true
