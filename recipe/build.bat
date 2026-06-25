@@ -48,26 +48,22 @@ set "READCON_VENDOR=%READCON_VENDOR:\=/%"
     echo offline = true
 )
 
-set "READCON_PREFIX=%SRC_DIR%\readcon-prefix"
-if not exist "%READCON_PREFIX%" mkdir "%READCON_PREFIX%"
-
 pushd "%READCON_SRC%"
 copy /Y "%RECIPE_DIR%\readcon-core-Cargo.lock" Cargo.lock >nul
 cargo-bundle-licenses --format yaml --output "%SRC_DIR%\readcon-THIRDPARTY.yml"
 if errorlevel 1 (popd & exit 1)
+:: Install into LIBRARY_PREFIX so runtime DLLs ship with the package.
 if defined CARGO_BUILD_TARGET (
-    cargo cinstall --offline --locked --release --target "%CARGO_BUILD_TARGET%" --prefix "%READCON_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+    cargo cinstall --offline --locked --release --target "%CARGO_BUILD_TARGET%" --prefix "%LIBRARY_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
 ) else (
-    cargo cinstall --offline --locked --release --prefix "%READCON_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+    cargo cinstall --offline --locked --release --prefix "%LIBRARY_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
 )
 if errorlevel 1 (popd & exit 1)
 popd
-copy /Y "%SRC_DIR%\readcon-THIRDPARTY.yml" "%READCON_PREFIX%\readcon-THIRDPARTY.yml" >nul
 
-set "PKG_CONFIG_PATH=%READCON_PREFIX%\lib\pkgconfig;%PKG_CONFIG_PATH%"
-set "LIB=%READCON_PREFIX%\lib;%LIB%"
-set "INCLUDE=%READCON_PREFIX%\include;%INCLUDE%"
-set "PATH=%READCON_PREFIX%\bin;%PATH%"
+set "PKG_CONFIG_PATH=%LIBRARY_LIB%\pkgconfig;%PKG_CONFIG_PATH%"
+set "LIB=%LIBRARY_LIB%;%LIB%"
+set "INCLUDE=%LIBRARY_INC%;%INCLUDE%"
 
 :: Remove wrap files to prevent meson from building subprojects from source
 del /q subprojects\xtb.wrap 2>nul
@@ -144,7 +140,7 @@ meson setup -Dpython.install_env=prefix ^
     -Dwith_cuh2=true ^
     -Dpip_metatomic=False ^
     -Dtorch_path="%LIBRARY_PREFIX%" ^
-    --pkg-config-path="%READCON_PREFIX%\lib\pkgconfig;%LIBRARY_LIB%\pkgconfig" ^
+    --pkg-config-path="%LIBRARY_LIB%\pkgconfig" ^
     --cmake-prefix-path="%LIBRARY_PREFIX%" ^
     --buildtype=release ^
     build
@@ -156,13 +152,4 @@ if errorlevel 1 exit 1
 meson install -C build
 if errorlevel 1 exit 1
 
-:: Ship readcon runtime DLLs next to eonclient.
-if exist "%READCON_PREFIX%\bin" (
-    if not exist "%LIBRARY_BIN%" mkdir "%LIBRARY_BIN%"
-    copy /Y "%READCON_PREFIX%\bin\*.dll" "%LIBRARY_BIN%\" >nul 2>&1
-)
-if exist "%READCON_PREFIX%\lib" (
-    if not exist "%LIBRARY_LIB%" mkdir "%LIBRARY_LIB%"
-    copy /Y "%READCON_PREFIX%\lib\*.dll" "%LIBRARY_BIN%\" >nul 2>&1
-    copy /Y "%READCON_PREFIX%\lib\*.lib" "%LIBRARY_LIB%\" >nul 2>&1
-)
+:: readcon DLLs/libs already under LIBRARY_PREFIX via cargo cinstall.

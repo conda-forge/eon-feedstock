@@ -40,8 +40,6 @@ if [[ ! -f "${READCON_SRC}/Cargo.toml" ]]; then
         READCON_SRC="$(dirname "${_inner}")"
     fi
 fi
-READCON_PREFIX="${SRC_DIR}/readcon-prefix"
-mkdir -p "${READCON_PREFIX}"
 if [[ ! -f "${READCON_SRC}/Cargo.toml" ]]; then
     echo "ERROR: readcon-core Cargo.toml not found under ${SRC_DIR}/readcon-core-src" >&2
     exit 1
@@ -59,13 +57,15 @@ directory = "${SRC_DIR}/readcon-vendor"
 offline = true
 EOF
 
+# Install C API directly into $PREFIX so dylib install names live under the conda
+# prefix (conda-build can rewrite them on package). A side readcon-prefix left
+# absolute paths that survived into the test env (osx_64 dyld abort).
 (
     cd "${READCON_SRC}"
     # Lockfile must match the pre-vendored crate set shipped in readcon-vendor.tar.xz.
     cp -f "${RECIPE_DIR}/readcon-core-Cargo.lock" Cargo.lock
     # License bundle for every transitive Rust dep (conda-forge policy); offline via vendor.
     cargo-bundle-licenses --format yaml --output "${SRC_DIR}/readcon-THIRDPARTY.yml"
-    # Install static+shared C API + headers + pkg-config into READCON_PREFIX.
     # conda-forge rust activation sets CARGO_BUILD_TARGET even on native builds; cargo-c
     # then looks for target/<triple>/release/*.pc while cargo wrote target/release/ (host).
     # Only pass --target when actually cross-compiling; otherwise clear it for this step.
@@ -80,20 +80,17 @@ EOF
         --locked \
         --release \
         ${cinstall_extra[@]+"${cinstall_extra[@]}"} \
-        --prefix "${READCON_PREFIX}" \
+        --prefix "${PREFIX}" \
         --libdir lib \
         --includedir include \
         --pkgconfigdir lib/pkgconfig
 )
 
-# Copy bundled licenses next to installed readcon artifacts for recipe license_file.
-cp -f "${SRC_DIR}/readcon-THIRDPARTY.yml" "${READCON_PREFIX}/readcon-THIRDPARTY.yml"
-
-export PKG_CONFIG_PATH="${READCON_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-export LIBRARY_PATH="${READCON_PREFIX}/lib:${LIBRARY_PATH:-}"
-export LD_LIBRARY_PATH="${READCON_PREFIX}/lib:${LD_LIBRARY_PATH:-}"
-export CPATH="${READCON_PREFIX}/include:${CPATH:-}"
-export CPLUS_INCLUDE_PATH="${READCON_PREFIX}/include:${CPLUS_INCLUDE_PATH:-}"
+export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+export LIBRARY_PATH="${PREFIX}/lib:${LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="${PREFIX}/lib:${LD_LIBRARY_PATH:-}"
+export CPATH="${PREFIX}/include:${CPATH:-}"
+export CPLUS_INCLUDE_PATH="${PREFIX}/include:${CPLUS_INCLUDE_PATH:-}"
 
 tee native.ini <<EOF
 [binaries]
@@ -102,7 +99,7 @@ EOF
 
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
-    --pkg-config-path="${READCON_PREFIX}/lib/pkgconfig" \
+    --pkg-config-path="${PREFIX}/lib/pkgconfig" \
     -Dwith_metatomic=True \
     -Dwith_xtb=True \
     -Dwith_serve=True \
@@ -113,48 +110,24 @@ meson setup -Dpython.install_env=prefix \
 meson compile -C build -v
 meson install -C build
 
-# Install readcon runtime libs into the package prefix so eonclient can load them.
-if [[ -d "${READCON_PREFIX}/lib" ]]; then
-    mkdir -p "${PREFIX}/lib"
-    shopt -s nullglob
-    for f in "${READCON_PREFIX}/lib/"*.so* "${READCON_PREFIX}/lib/"*.dylib; do
-        cp -a "${f}" "${PREFIX}/lib/"
-    done
-    shopt -u nullglob
-fi
-# macOS: cargo-c embeds absolute build-prefix install names; conda-build may not
-# fully rewrite eonclient's LC_LOAD_DYLIB to @rpath. Point id + refs at $PREFIX/lib.
+# macOS: force @rpath ids/loads for readcon dylibs already under $PREFIX/lib.
 if [[ "$(uname)" == "Darwin" ]]; then
+    fix_readcon_install_names() {
+        local target="$1"
+        [[ -f "${target}" && ! -L "${target}" ]] || return 0
+        while IFS= read -r old; do
+            [[ -z "${old}" ]] && continue
+            install_name_tool -change "${old}" "@rpath/$(basename "${old}")" "${target}" 2>/dev/null || true
+        done < <(otool -L "${target}" 2>/dev/null | awk '/libreadcon_core/ && $1 ~ /^\// {print $1}')
+    }
     shopt -s nullglob
     for dylib in "${PREFIX}/lib/"libreadcon_core*.dylib; do
         [[ -L "${dylib}" ]] && continue
-        base="$(basename "${dylib}")"
-        install_name_tool -id "@rpath/${base}" "${dylib}" || true
-        # Fix self-references among versioned/symlink copies in the same dir.
-        for other in "${PREFIX}/lib/"libreadcon_core*.dylib; do
-            [[ -L "${other}" ]] && continue
-            obase="$(basename "${other}")"
-            install_name_tool -change \
-                "${READCON_PREFIX}/lib/${obase}" \
-                "@rpath/${obase}" \
-                "${dylib}" 2>/dev/null || true
-        done
+        install_name_tool -id "@rpath/$(basename "${dylib}")" "${dylib}" || true
+        fix_readcon_install_names "${dylib}"
     done
     if [[ -x "${PREFIX}/bin/eonclient" ]]; then
-        for dylib in "${PREFIX}/lib/"libreadcon_core*.dylib; do
-            [[ -L "${dylib}" ]] && continue
-            base="$(basename "${dylib}")"
-            install_name_tool -change \
-                "${READCON_PREFIX}/lib/${base}" \
-                "@rpath/${base}" \
-                "${PREFIX}/bin/eonclient" 2>/dev/null || true
-            # Also fix intermediate versioned names (e.g. libreadcon_core.0.12.dylib).
-            ver_base="${base%%.dylib}"
-            for ref in "${READCON_PREFIX}/lib/${base}" "${READCON_PREFIX}/lib/libreadcon_core.0.12.dylib" "${READCON_PREFIX}/lib/libreadcon_core.dylib"; do
-                install_name_tool -change "${ref}" "@rpath/${base}" "${PREFIX}/bin/eonclient" 2>/dev/null || true
-            done
-        done
-        # Ensure rpath includes @loader_path/../lib for conda prefix layout.
+        fix_readcon_install_names "${PREFIX}/bin/eonclient"
         install_name_tool -add_rpath "@loader_path/../lib" "${PREFIX}/bin/eonclient" 2>/dev/null || true
     fi
     shopt -u nullglob
