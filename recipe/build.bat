@@ -10,32 +10,66 @@
 ::   - MinGW-built xtb: generate MSVC import lib from DLL exports (ABI boundary)
 ::   - Stack: meson sets /STACK:16777216 for MSVC link (Windows 1 MB default overflows
 ::     legacy Fortran stack arrays; Linux default is 8 MB)
-:: Cargo: HTTP/1.1 + retries (crates.io HTTP2 framing fails on some runners, incl. aarch64).
+:: readcon-core: offline cargo-c + vendored crates (no crates.io / github during build).
 
-set "CARGO_HTTP_MULTIPLEXING=false"
-set "CARGO_NET_RETRY=10"
-set "CARGO_HTTP_TIMEOUT=300"
-
-:: cbindgen has no conda-forge win-64 build; grab it via cargo into the host
-:: prefix so readcon-core's meson subproject can generate its C header.
-set "CARGO_ATTEMPT=0"
-:cargo_install_cbindgen
-set /a CARGO_ATTEMPT+=1
-cargo install --root "%LIBRARY_PREFIX%" cbindgen
-if errorlevel 1 (
-    if %CARGO_ATTEMPT% GEQ 5 (
-        echo ERROR: cargo install cbindgen failed after %CARGO_ATTEMPT% attempts
-        exit 1
-    )
-    echo WARN: cargo install cbindgen attempt %CARGO_ATTEMPT% failed; retrying...
-    timeout /t 10 /nobreak >nul
-    goto cargo_install_cbindgen
+set "CARGO_NET_OFFLINE=true"
+set "CARGO_HOME=%SRC_DIR%\.cargo-home"
+if not exist "%CARGO_HOME%" mkdir "%CARGO_HOME%"
+if not exist "%SRC_DIR%\readcon-vendor" (
+    echo ERROR: readcon-vendor not found under %SRC_DIR%
+    exit 1
 )
+if not exist "%SRC_DIR%\readcon-core-src" (
+    echo ERROR: readcon-core-src not found under %SRC_DIR%
+    exit 1
+)
+set "READCON_SRC=%SRC_DIR%\readcon-core-src"
+if not exist "%READCON_SRC%\Cargo.toml" (
+    for /d %%D in ("%SRC_DIR%\readcon-core-src\readcon-core-*") do (
+        if exist "%%D\Cargo.toml" set "READCON_SRC=%%D"
+    )
+)
+if not exist "%READCON_SRC%\Cargo.toml" (
+    echo ERROR: readcon-core Cargo.toml not found
+    exit 1
+)
+
+:: Write cargo offline config with absolute vendor path (Windows backslashes -> forward).
+set "READCON_VENDOR=%SRC_DIR%\readcon-vendor"
+set "READCON_VENDOR=%READCON_VENDOR:\=/%"
+> "%CARGO_HOME%\config.toml" (
+    echo [source.crates-io]
+    echo replace-with = "vendored-sources"
+    echo.
+    echo [source.vendored-sources]
+    echo directory = "%READCON_VENDOR%"
+    echo.
+    echo [net]
+    echo offline = true
+)
+
+set "READCON_PREFIX=%SRC_DIR%\readcon-prefix"
+if not exist "%READCON_PREFIX%" mkdir "%READCON_PREFIX%"
+
+pushd "%READCON_SRC%"
+copy /Y "%RECIPE_DIR%\readcon-core-Cargo.lock" Cargo.lock >nul
+cargo-bundle-licenses --format yaml --output "%SRC_DIR%\readcon-THIRDPARTY.yml"
+if errorlevel 1 (popd & exit 1)
+cargo cinstall --offline --locked --release --prefix "%READCON_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+if errorlevel 1 (popd & exit 1)
+popd
+copy /Y "%SRC_DIR%\readcon-THIRDPARTY.yml" "%READCON_PREFIX%\readcon-THIRDPARTY.yml" >nul
+
+set "PKG_CONFIG_PATH=%READCON_PREFIX%\lib\pkgconfig;%PKG_CONFIG_PATH%"
+set "LIB=%READCON_PREFIX%\lib;%LIB%"
+set "INCLUDE=%READCON_PREFIX%\include;%INCLUDE%"
+set "PATH=%READCON_PREFIX%\bin;%PATH%"
 
 :: Remove wrap files to prevent meson from building subprojects from source
 del /q subprojects\xtb.wrap 2>nul
 del /q subprojects\vesin.wrap 2>nul
 del /q subprojects\rgpot.wrap 2>nul
+del /q subprojects\readcon-core.wrap 2>nul
 
 :: Generate MSVC-compatible import library from MinGW-built xtb DLL
 set "XTB_DLL_NAME="
@@ -95,41 +129,6 @@ if not defined FLANG_RT_DIR (
     )
 )
 
-meson subprojects download readcon-core
-if errorlevel 1 exit 1
-python -c "import pathlib; p=pathlib.Path('subprojects/readcon-core/meson.build'); t=p.read_text(); old='\"/cargo-target/release/\"'; new='\"/cargo-target/\" + (__import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\", \"\") + \"/\" if __import__(\"os\").environ.get(\"CARGO_BUILD_TARGET\") else \"\") + \"release/\"'; p.write_text(t.replace(old, new))"
-if errorlevel 1 exit 1
-
-pushd subprojects\readcon-core
-set "CARGO_ATTEMPT=0"
-:cargo_fetch_readcon
-set /a CARGO_ATTEMPT+=1
-cargo fetch --locked
-if errorlevel 1 cargo fetch
-if errorlevel 1 (
-    if %CARGO_ATTEMPT% GEQ 5 (
-        echo ERROR: cargo fetch readcon-core failed after %CARGO_ATTEMPT% attempts
-        popd & exit 1
-    )
-    echo WARN: cargo fetch attempt %CARGO_ATTEMPT% failed; retrying...
-    timeout /t 10 /nobreak >nul
-    goto cargo_fetch_readcon
-)
-set "CARGO_ATTEMPT=0"
-:cargo_bundle_licenses
-set /a CARGO_ATTEMPT+=1
-cargo-bundle-licenses --format yaml --output THIRDPARTY.yml
-if errorlevel 1 (
-    if %CARGO_ATTEMPT% GEQ 5 (
-        echo ERROR: cargo-bundle-licenses failed after %CARGO_ATTEMPT% attempts
-        popd & exit 1
-    )
-    echo WARN: cargo-bundle-licenses attempt %CARGO_ATTEMPT% failed; retrying...
-    timeout /t 10 /nobreak >nul
-    goto cargo_bundle_licenses
-)
-popd
-
 :: In-tree Fortran ON including CuH2 (issue #15). Static default-library; MSVC AR above.
 meson setup -Dpython.install_env=prefix ^
     --prefix="%PREFIX%" ^
@@ -141,7 +140,7 @@ meson setup -Dpython.install_env=prefix ^
     -Dwith_cuh2=true ^
     -Dpip_metatomic=False ^
     -Dtorch_path="%LIBRARY_PREFIX%" ^
-    --pkg-config-path="%LIBRARY_LIB%\pkgconfig" ^
+    --pkg-config-path="%READCON_PREFIX%\lib\pkgconfig;%LIBRARY_LIB%\pkgconfig" ^
     --cmake-prefix-path="%LIBRARY_PREFIX%" ^
     --buildtype=release ^
     build
@@ -152,3 +151,14 @@ if errorlevel 1 exit 1
 
 meson install -C build
 if errorlevel 1 exit 1
+
+:: Ship readcon runtime DLLs next to eonclient.
+if exist "%READCON_PREFIX%\bin" (
+    if not exist "%LIBRARY_BIN%" mkdir "%LIBRARY_BIN%"
+    copy /Y "%READCON_PREFIX%\bin\*.dll" "%LIBRARY_BIN%\" >nul 2>&1
+)
+if exist "%READCON_PREFIX%\lib" (
+    if not exist "%LIBRARY_LIB%" mkdir "%LIBRARY_LIB%"
+    copy /Y "%READCON_PREFIX%\lib\*.dll" "%LIBRARY_BIN%\" >nul 2>&1
+    copy /Y "%READCON_PREFIX%\lib\*.lib" "%LIBRARY_LIB%\" >nul 2>&1
+)
