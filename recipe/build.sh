@@ -113,14 +113,49 @@ meson setup -Dpython.install_env=prefix \
 meson compile -C build -v
 meson install -C build
 
-# Install readcon shared libs into the package prefix so eonclient can dlopen/link at runtime.
+# Install readcon runtime libs into the package prefix so eonclient can load them.
 if [[ -d "${READCON_PREFIX}/lib" ]]; then
     mkdir -p "${PREFIX}/lib"
-    # Ship only runtime .so/.dylib; static .a stays build-only unless needed.
     shopt -s nullglob
     for f in "${READCON_PREFIX}/lib/"*.so* "${READCON_PREFIX}/lib/"*.dylib; do
         cp -a "${f}" "${PREFIX}/lib/"
     done
     shopt -u nullglob
 fi
-# Headers not required at runtime; skip install unless consumers need them.
+# macOS: cargo-c embeds absolute build-prefix install names; conda-build may not
+# fully rewrite eonclient's LC_LOAD_DYLIB to @rpath. Point id + refs at $PREFIX/lib.
+if [[ "$(uname)" == "Darwin" ]]; then
+    shopt -s nullglob
+    for dylib in "${PREFIX}/lib/"libreadcon_core*.dylib; do
+        [[ -L "${dylib}" ]] && continue
+        base="$(basename "${dylib}")"
+        install_name_tool -id "@rpath/${base}" "${dylib}" || true
+        # Fix self-references among versioned/symlink copies in the same dir.
+        for other in "${PREFIX}/lib/"libreadcon_core*.dylib; do
+            [[ -L "${other}" ]] && continue
+            obase="$(basename "${other}")"
+            install_name_tool -change \
+                "${READCON_PREFIX}/lib/${obase}" \
+                "@rpath/${obase}" \
+                "${dylib}" 2>/dev/null || true
+        done
+    done
+    if [[ -x "${PREFIX}/bin/eonclient" ]]; then
+        for dylib in "${PREFIX}/lib/"libreadcon_core*.dylib; do
+            [[ -L "${dylib}" ]] && continue
+            base="$(basename "${dylib}")"
+            install_name_tool -change \
+                "${READCON_PREFIX}/lib/${base}" \
+                "@rpath/${base}" \
+                "${PREFIX}/bin/eonclient" 2>/dev/null || true
+            # Also fix intermediate versioned names (e.g. libreadcon_core.0.12.dylib).
+            ver_base="${base%%.dylib}"
+            for ref in "${READCON_PREFIX}/lib/${base}" "${READCON_PREFIX}/lib/libreadcon_core.0.12.dylib" "${READCON_PREFIX}/lib/libreadcon_core.dylib"; do
+                install_name_tool -change "${ref}" "@rpath/${base}" "${PREFIX}/bin/eonclient" 2>/dev/null || true
+            done
+        done
+        # Ensure rpath includes @loader_path/../lib for conda prefix layout.
+        install_name_tool -add_rpath "@loader_path/../lib" "${PREFIX}/bin/eonclient" 2>/dev/null || true
+    fi
+    shopt -u nullglob
+fi
