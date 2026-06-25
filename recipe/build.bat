@@ -55,7 +55,11 @@ pushd "%READCON_SRC%"
 copy /Y "%RECIPE_DIR%\readcon-core-Cargo.lock" Cargo.lock >nul
 cargo-bundle-licenses --format yaml --output "%SRC_DIR%\readcon-THIRDPARTY.yml"
 if errorlevel 1 (popd & exit 1)
-cargo cinstall --offline --locked --release --prefix "%READCON_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+if defined CARGO_BUILD_TARGET (
+    cargo cinstall --offline --locked --release --target "%CARGO_BUILD_TARGET%" --prefix "%READCON_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+) else (
+    cargo cinstall --offline --locked --release --prefix "%READCON_PREFIX%" --libdir lib --includedir include --pkgconfigdir lib/pkgconfig
+)
 if errorlevel 1 (popd & exit 1)
 popd
 copy /Y "%SRC_DIR%\readcon-THIRDPARTY.yml" "%READCON_PREFIX%\readcon-THIRDPARTY.yml" >nul

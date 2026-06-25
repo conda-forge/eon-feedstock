@@ -66,10 +66,17 @@ EOF
     # License bundle for every transitive Rust dep (conda-forge policy); offline via vendor.
     cargo-bundle-licenses --format yaml --output "${SRC_DIR}/readcon-THIRDPARTY.yml"
     # Install static+shared C API + headers + pkg-config into READCON_PREFIX.
+    # Honor CARGO_BUILD_TARGET so cargo-c writes .pc into the same target dir cargo used
+    # (cross builds and some aarch64 activations set this; mismatch => "failed to write ...pc").
+    cinstall_extra=()
+    if [[ -n "${CARGO_BUILD_TARGET:-}" ]]; then
+        cinstall_extra+=(--target "${CARGO_BUILD_TARGET}")
+    fi
     cargo cinstall \
         --offline \
         --locked \
         --release \
+        "${cinstall_extra[@]+"${cinstall_extra[@]}"}" \
         --prefix "${READCON_PREFIX}" \
         --libdir lib \
         --includedir include \
