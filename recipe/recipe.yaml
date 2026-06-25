@@ -11,7 +11,8 @@ source:
     sha256: d4695f81ffd7a1c729f48b5c42737d381c686c79ca63ca95769f31415a3798b7
     # v2.15.0+ ships runtime-loadable Fortran pots (#342); fix_win_cuh2_potinit was v2.14.0-only.
     patches:
-      # Prefer cargo-c/pkg-config readcon-core over meson subproject (offline builds).
+      # Prefer cargo-c/pkg-config readcon-core over meson subproject (offline builds);
+      # adapt ConFileIO for readcon-core 0.12 builder API (add_atom + set_atom_velocity).
       - use_readcon_pkgconfig.patch
   - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v1.0.3.tar.gz
     sha256: b46d9d6ecb0d47c621d7ec6051c19025d3254b366d4c98232168f74b75c0f7da
