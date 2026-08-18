@@ -1,0 +1,37 @@
+diff --git a/meson.build b/meson.build
+index 24d44d8..8e81eda 100644
+--- a/meson.build
++++ b/meson.build
+@@ -11,6 +11,19 @@ project(
+         'cpp_std=c++20',
+     ],
+ )
++
++# MSVC: Cap'n Proto templates break when windows.h defines `interface`.
++# Force-include the guard after compiler detection. A /FI path in CXXFLAGS
++# is applied to Meson's cl.exe sanity check; a drive-letter path becomes
++# /FID:/... and Meson reports that cl.exe cannot compile programs.
++if host_machine.system() == 'windows' and meson.get_compiler('cpp').get_id() == 'msvc'
++    add_project_arguments(
++        '/FI',
++        meson.current_source_dir() / 'msvc_capnp_guard.h',
++        language: 'cpp',
++    )
++endif
++
+ # IMPORTANT!! warning_level=3 passes -fimplicit-none
+ # eonclient needs implicit typing!!
+ 
+diff --git a/msvc_capnp_guard.h b/msvc_capnp_guard.h
+new file mode 100644
+index 0000000..2b774fe
+--- /dev/null
++++ b/msvc_capnp_guard.h
+@@ -0,0 +1,7 @@
++#pragma once
++#ifndef NOMINMAX
++#define NOMINMAX
++#endif
++#ifdef interface
++#undef interface
++#endif

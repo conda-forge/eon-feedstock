@@ -90,6 +90,19 @@ if errorlevel 1 (
     exit 1
 )
 
+:: flang/clang activation injects GNU -Wl,defaultlib:.../clang_rt.builtins-*.lib
+:: into LDFLAGS. Meson 1.12 feeds LDFLAGS into the cl.exe sanity check, which
+:: then dies with D8021 (invalid numeric argument /Wl,...). Clear GNU LDFLAGS
+:: and expose the builtins import lib via MSVC LIBPATH instead.
+for /d %%D in ("%BUILD_PREFIX%\lib\clang\*" "%LIBRARY_PREFIX%\lib\clang\*") do (
+    if exist "%%D\lib\windows\clang_rt.builtins-x86_64.lib" (
+        set "LIB=%%D\lib\windows;%LIB%"
+        echo Using clang_rt builtins LIBPATH: %%D\lib\windows
+    )
+)
+set "LDFLAGS="
+echo Cleared GNU LDFLAGS for cl.exe sanity check
+
 :: flang_rt import libs live under clang resource dir; MSVC link needs LIBPATH
 :: (LNK1104: cannot open file 'flang_rt.runtime.dynamic.lib' otherwise).
 set "FLANG_RT_DIR="
@@ -109,22 +122,21 @@ if not defined FLANG_RT_DIR (
     )
 )
 
-:: Cap'n Proto on MSVC: windows.h / RPC headers define `interface` as a macro,
-:: which corrupts capnp templates (cascade errors citing IPrintDialogServices).
-:: Force-include a tiny guard before every TU so rgpot/eOn RPC sources build.
-> "%SRC_DIR%\msvc_capnp_guard.h" (
-  echo #pragma once
-  echo #ifndef NOMINMAX
-  echo #define NOMINMAX
-  echo #endif
-  echo #ifdef interface
-  echo #undef interface
-  echo #endif
+:: Cap'n Proto /FI is in 0001-win-msvc-capnp-fi-after-project.patch
+:: (add_project_arguments after project()). Do not put /FI in CXXFLAGS:
+:: Meson applies CXXFLAGS to the cl.exe sanity check; /FID:/... (drive letter)
+:: makes Meson 1.12 report "Compiler cl.exe cannot compile programs."
+set "CXXFLAGS=%CXXFLAGS% /DNOMINMAX /DWIN32_LEAN_AND_MEAN"
+
+:: Pin C/C++/AR to MSVC so flang activation cannot select llvm-ar or clang-cl.
+> "%SRC_DIR%\native-msvc.ini" (
+  echo [binaries]
+  echo c = 'cl.exe'
+  echo cpp = 'cl.exe'
+  echo ar = 'lib'
 )
-:: /FI wants a path without spaces issues; use short-style via pushd and relative.
-:: Forward slashes work with cl.exe force-include.
-set "MSVC_CAPNP_GUARD=%SRC_DIR:\=/%/msvc_capnp_guard.h"
-set "CXXFLAGS=%CXXFLAGS% /FI%MSVC_CAPNP_GUARD% /DNOMINMAX /DWIN32_LEAN_AND_MEAN"
+echo Using CC=%CC% CXX=%CXX% AR=%AR%
+where cl.exe
 
 :: MSVC import-lib name aliases for meson find_library.
 :: conda-forge libmetatensor ships Library/lib/metatensor.dll.lib (not metatensor.lib /
@@ -145,6 +157,7 @@ if exist "%LIBRARY_LIB%\metatomic_torch.lib" (
 
 :: In-tree Fortran ON including CuH2 (issue #15). Static default-library; MSVC AR above.
 meson setup -Dpython.install_env=prefix ^
+    --native-file="%SRC_DIR%\native-msvc.ini" ^
     --prefix="%PREFIX%" ^
     --default-library=static ^
     -Dwith_metatomic=True ^
@@ -158,7 +171,11 @@ meson setup -Dpython.install_env=prefix ^
     --cmake-prefix-path="%LIBRARY_PREFIX%" ^
     --buildtype=release ^
     build
-if errorlevel 1 exit 1
+if errorlevel 1 (
+    echo ===== meson-logs\meson-log.txt =====
+    if exist build\meson-logs\meson-log.txt type build\meson-logs\meson-log.txt
+    exit 1
+)
 
 meson compile -C build -v
 if errorlevel 1 exit 1

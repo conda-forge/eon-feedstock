@@ -1,5 +1,5 @@
 context:
-  version: "3.0.0"
+  version: "3.2.0"
 
 package:
   name: eon
@@ -7,22 +7,23 @@ package:
 
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-    # Published asset from TheochemUI/eOn v3.0.0 (release.yml fat tarball).
-    sha256: 406b091a49023f702d5e2fe49df45598b59c4a5842b012ea3abd9261afdb8545
+    # Published asset from TheochemUI/eOn v3.2.0 (release.yml fat tarball).
+    sha256: b459d183d91a15b7aa6fbcf40c2b06e8e93239c77105172c51da0b5a584fdf46
+    patches:
+      - 0001-win-msvc-capnp-fi-after-project.patch
     # v2.16.0 targets readcon-core 0.13 in-tree (IoStatus API); the 0.12
     # builder-API patch (use_readcon_pkgconfig.patch) is upstream and dropped.
-  - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v3.0.0.tar.gz
-    sha256: 3eb667d28fc55306379c282d07b3e0fd7af692e45e713fb8ce71e034e71bb0bf
+  - url: https://github.com/OmniPotentRPC/rgpot/archive/2811c366a15b648e97064b32aab6faf92ddc1d45.tar.gz
+    sha256: ef3b60bfa03daf0a8cd2add244b9c3b01cfe9d8cda319a6b179953a9a5f55c12
     target_directory: subprojects/rgpot
-    # rgpot >=1.2.0 renames the generated capnp sources; fix_capnpc.patch dropped.
-    # v3.0.0 hosts the potentials eOn used to build in tree, including the
-    # Fortran 2018 kernels, and folds the Cap'n Proto schema into librgpot
-    # (no libptlrpc.so). eOn requires >=3.0.0 from here on.
+    # eOn 3.2.0 wrap tracks feat/force-batch-impl: RgpotAdapter::forceBatch
+    # needs ForceBatch / forceBatchImpl. No rgpot tag carries those symbols.
+    # 2811c366 is that branch tip.
   # readcon-core C-API built with cargo-c; crate deps resolve from crates.io
   # pinned by the upstream Cargo.lock (same pattern as the readcon-core
   # staged recipe).
-  - url: https://github.com/lode-org/readcon-core/archive/refs/tags/v0.13.1.tar.gz
-    sha256: a261e69b87228dcc8f161eef800590b0395b4c93605b838c6216d40a1780f0bf
+  - url: https://github.com/lode-org/readcon-core/archive/refs/tags/v0.14.5.tar.gz
+    sha256: 77c318dad4f62c96b9876905108494e618ea878f941055e6992fe63da39603a3
     target_directory: readcon-core-src
 
 build:
