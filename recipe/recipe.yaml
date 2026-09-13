@@ -39,6 +39,9 @@ requirements:
     # win-64: flang (conda-forge) or gfortran; C++/link stay MSVC; AR=lib in build.bat
     # (issue #15 in-tree pots — see build.bat + rgoswami.me/posts/windows-compat-sci-cpp/)
     - ${{ compiler('fortran') }}
+    # flang 23.1 win-64 does not ship iso_c_binding.mod; vesin cdef.f90 fails.
+    - if: win
+      then: flang >=21,<23
     # readcon-core C-API is built with cargo-c (lock-pinned crates.io deps);
     # headers/libs are resolved via pkg-config.
     - ${{ compiler('rust') }}

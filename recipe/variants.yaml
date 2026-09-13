@@ -4,3 +4,7 @@ MACOSX_SDK_VERSION:
 # co-pin with libmetatomic-torch >=0.1.15 (needs libtorch 2.12.x)
 libtorch:
   - '2.12'
+# flang 23.1 win-64 drops iso_c_binding.mod; keep the 3.2.0 compiler line.
+fortran_compiler_version:
+  - if: win
+    then: '22'
