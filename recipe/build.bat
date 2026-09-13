@@ -41,6 +41,15 @@ if defined CARGO_BUILD_TARGET (
 if errorlevel 1 (popd & exit 1)
 popd
 
+:: Tag v0.14.10 left Cargo.toml at 0.14.9; eOn 3.2.1 meson wants >=0.14.10.
+set "READCON_PC=%LIBRARY_PREFIX%\lib\pkgconfig\readcon-core.pc"
+if not exist "%READCON_PC%" (
+    echo ERROR: %READCON_PC% missing after cargo cinstall
+    exit 1
+)
+python -c "from pathlib import Path; p=Path(r'%READCON_PC%'); t=p.read_text(); old,new='Version: 0.14.9','Version: 0.14.10'; missing=old not in t; p.write_text(t.replace(old,new,1)) if not missing else None; raise SystemExit('missing Version 0.14.9 in '+str(p) if missing else 0)"
+if errorlevel 1 exit 1
+
 set "PKG_CONFIG_PATH=%LIBRARY_LIB%\pkgconfig;%PKG_CONFIG_PATH%"
 set "LIB=%LIBRARY_LIB%;%LIB%"
 set "INCLUDE=%LIBRARY_INC%;%INCLUDE%"

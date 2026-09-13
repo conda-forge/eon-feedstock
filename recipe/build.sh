@@ -64,6 +64,24 @@ fi
         --pkgconfigdir lib/pkgconfig
 )
 
+# Tag v0.14.10 left Cargo.toml / meson project() at 0.14.9, so cargo-c writes
+# Version: 0.14.9. eOn 3.2.1 meson requires >=0.14.10 (wrap revision v0.14.10).
+pc="${PREFIX}/lib/pkgconfig/readcon-core.pc"
+if [[ ! -f "${pc}" ]]; then
+    echo "ERROR: ${pc} missing after cargo cinstall" >&2
+    exit 1
+fi
+python3 -c "
+from pathlib import Path
+p = Path(r'''${pc}''')
+t = p.read_text()
+old, new = 'Version: 0.14.9', 'Version: 0.14.10'
+if old not in t:
+    raise SystemExit(f'{p} has no {old!r}')
+p.write_text(t.replace(old, new, 1))
+print(f'rewrote {p} {old} -> {new}')
+"
+
 # macOS: set @rpath ids on readcon dylibs in $PREFIX before meson links eonclient.
 if [[ "$(uname)" == "Darwin" ]]; then
     fix_readcon_install_names() {
