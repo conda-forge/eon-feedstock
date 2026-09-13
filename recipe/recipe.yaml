@@ -1,5 +1,5 @@
 context:
-  version: "3.2.0"
+  version: "3.2.1"
 
 package:
   name: eon
@@ -7,23 +7,21 @@ package:
 
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-    # Published asset from TheochemUI/eOn v3.2.0 (release.yml fat tarball).
-    sha256: b459d183d91a15b7aa6fbcf40c2b06e8e93239c77105172c51da0b5a584fdf46
+    # Published asset from TheochemUI/eOn v3.2.1 (release.yml fat tarball).
+    sha256: 85b5ed37659c6183cad6a15b41507217f8d5c5807d8a2b79c13fcbbfdc8c18f1
     patches:
       - 0001-win-msvc-capnp-fi-after-project.patch
     # v2.16.0 targets readcon-core 0.13 in-tree (IoStatus API); the 0.12
     # builder-API patch (use_readcon_pkgconfig.patch) is upstream and dropped.
-  - url: https://github.com/OmniPotentRPC/rgpot/archive/2811c366a15b648e97064b32aab6faf92ddc1d45.tar.gz
-    sha256: ef3b60bfa03daf0a8cd2add244b9c3b01cfe9d8cda319a6b179953a9a5f55c12
+  - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v3.2.0.tar.gz
+    sha256: 0bde596baad1741b79fef62e647ff7641725034d798bf346459cd274c4f451c7
     target_directory: subprojects/rgpot
-    # eOn 3.2.0 wrap tracks feat/force-batch-impl: RgpotAdapter::forceBatch
-    # needs ForceBatch / forceBatchImpl. No rgpot tag carries those symbols.
-    # 2811c366 is that branch tip.
+    # eOn 3.2.1 wrap is rgpot v3.2.0.
   # readcon-core C-API built with cargo-c; crate deps resolve from crates.io
   # pinned by the upstream Cargo.lock (same pattern as the readcon-core
   # staged recipe).
-  - url: https://github.com/lode-org/readcon-core/archive/refs/tags/v0.14.5.tar.gz
-    sha256: 77c318dad4f62c96b9876905108494e618ea878f941055e6992fe63da39603a3
+  - url: https://github.com/lode-org/readcon-core/archive/refs/tags/v0.14.10.tar.gz
+    sha256: 6b0b136e1285c3fb7832420143edd0597dadbf973f907796721b906252466e92
     target_directory: readcon-core-src
 
 build:
