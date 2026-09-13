@@ -137,12 +137,27 @@ if not defined FLANG_RT_DIR (
 :: makes Meson 1.12 report "Compiler cl.exe cannot compile programs."
 set "CXXFLAGS=%CXXFLAGS% /DNOMINMAX /DWIN32_LEAN_AND_MEAN"
 
+:: Flang 23 + meson -module-dir hides intrinsic .mod lookup. vesin cdef.f90
+:: does `use, intrinsic :: iso_c_binding`; point flang at the packaged .mod.
+python -c "from pathlib import Path; import os; roots=[Path(os.environ[k]) for k in ('BUILD_PREFIX','PREFIX') if os.environ.get(k)]; pats=['Library/include/flang/iso_c_binding.mod','include/flang/iso_c_binding.mod']; hits=[r/p for r in roots for p in pats if (r/p).is_file()]; hits += [p for r in roots for p in (r/'Library'/'lib'/'clang').glob('*/include/flang/iso_c_binding.mod')]; open(r'%SRC_DIR%\flang_mod_dir.txt','w').write(str(hits[0].parent) if hits else '')"
+set /p FLANG_MOD_DIR=<"%SRC_DIR%\flang_mod_dir.txt"
+if not defined FLANG_MOD_DIR (
+    echo ERROR: iso_c_binding.mod not found under BUILD_PREFIX/PREFIX
+    exit 1
+)
+set "FLANG_MOD_DIR_POSIX=%FLANG_MOD_DIR:\=/%"
+set "FFLAGS=%FFLAGS% -I%FLANG_MOD_DIR%"
+set "FCFLAGS=%FCFLAGS% -I%FLANG_MOD_DIR%"
+echo Using flang module include: %FLANG_MOD_DIR%
+
 :: Pin C/C++/AR to MSVC so flang activation cannot select llvm-ar or clang-cl.
 > "%SRC_DIR%\native-msvc.ini" (
   echo [binaries]
   echo c = 'cl.exe'
   echo cpp = 'cl.exe'
   echo ar = 'lib'
+  echo [built-in options]
+  echo fortran_args = ['-I%FLANG_MOD_DIR_POSIX%']
 )
 echo Using CC=%CC% CXX=%CXX% AR=%AR%
 where cl.exe
