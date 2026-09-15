@@ -1,6 +1,6 @@
 diff -Naur a/client/potentials/Metatomic/MetatomicDynPot.cpp b/client/potentials/Metatomic/MetatomicDynPot.cpp
 --- a/client/potentials/Metatomic/MetatomicDynPot.cpp	2026-09-15 08:21:36.000000000 -0500
-+++ b/client/potentials/Metatomic/MetatomicDynPot.cpp	2026-09-15 08:46:18.233173386 -0500
++++ b/client/potentials/Metatomic/MetatomicDynPot.cpp	2026-09-15 08:52:20.804796741 -0500
 @@ -4,6 +4,7 @@
  ** SPDX-License-Identifier: BSD-3-Clause
  */
@@ -11,7 +11,7 @@ diff -Naur a/client/potentials/Metatomic/MetatomicDynPot.cpp b/client/potentials
  #include <array>
 diff -Naur a/client/potentials/Rgpot/RgpotPot.cpp b/client/potentials/Rgpot/RgpotPot.cpp
 --- a/client/potentials/Rgpot/RgpotPot.cpp	2026-09-15 08:21:36.000000000 -0500
-+++ b/client/potentials/Rgpot/RgpotPot.cpp	2026-09-15 08:46:18.232285881 -0500
++++ b/client/potentials/Rgpot/RgpotPot.cpp	2026-09-15 08:52:20.779796659 -0500
 @@ -2,6 +2,7 @@
  ** This file is part of eOn.
  */
@@ -22,7 +22,7 @@ diff -Naur a/client/potentials/Rgpot/RgpotPot.cpp b/client/potentials/Rgpot/Rgpo
  #include <algorithm>
 diff -Naur a/include/eon/potentials/LAMMPS/LammpsLoader.h b/include/eon/potentials/LAMMPS/LammpsLoader.h
 --- a/include/eon/potentials/LAMMPS/LammpsLoader.h	2026-09-15 08:21:36.000000000 -0500
-+++ b/include/eon/potentials/LAMMPS/LammpsLoader.h	2026-09-15 08:46:18.232925487 -0500
++++ b/include/eon/potentials/LAMMPS/LammpsLoader.h	2026-09-15 08:52:20.797796718 -0500
 @@ -99,8 +99,6 @@
  
    void ensure_loaded();
@@ -32,9 +32,20 @@ diff -Naur a/include/eon/potentials/LAMMPS/LammpsLoader.h b/include/eon/potentia
    bool m_loaded{false};
    bool m_tried{false};
    dynlib::Handle m_handle{};
+diff -Naur a/include/eon/potentials/Metatomic/MetatomicPotential.h b/include/eon/potentials/Metatomic/MetatomicPotential.h
+--- a/include/eon/potentials/Metatomic/MetatomicPotential.h	2026-09-15 08:21:36.000000000 -0500
++++ b/include/eon/potentials/Metatomic/MetatomicPotential.h	2026-09-15 08:52:20.815796777 -0500
+@@ -11,6 +11,7 @@
+ */
+ #pragma once
+ 
++#include "eon/Parameters.h"
+ #include "eon/Potential.h"
+ #include <mutex>
+ 
 diff -Naur a/include/eon/potentials/XTBPot/XTBPot.h b/include/eon/potentials/XTBPot/XTBPot.h
 --- a/include/eon/potentials/XTBPot/XTBPot.h	2026-09-15 08:21:36.000000000 -0500
-+++ b/include/eon/potentials/XTBPot/XTBPot.h	2026-09-15 08:46:18.232665648 -0500
++++ b/include/eon/potentials/XTBPot/XTBPot.h	2026-09-15 08:52:20.790796695 -0500
 @@ -11,6 +11,7 @@
  */
  #pragma once
@@ -43,3 +54,18 @@ diff -Naur a/include/eon/potentials/XTBPot/XTBPot.h b/include/eon/potentials/XTB
  #include "eon/Potential.h"
  #include "units.hpp"
  #include "xtb.h"
+@@ -21,12 +22,10 @@
+ public:
+   // Functions
+   XTBPot(const eonc::Parameters &p)
+-      : eonc::Potential(eonc::PotType::XTB, p),
+-        xtb_acc{p.xtb_options().acc},
++      : eonc::Potential(eonc::PotType::XTB, p), xtb_acc{p.xtb_options().acc},
+         xtb_electronic_temperature{p.xtb_options().elec_temperature},
+         xtb_max_iter{p.xtb_options().maxiter},
+-        total_charge{p.xtb_options().charge},
+-        uhf{p.xtb_options().uhf} {
++        total_charge{p.xtb_options().charge}, uhf{p.xtb_options().uhf} {
+     // Deprecated for packaging: prefer -Dwith_rgpot=true + potential=RGPOT
+     // backend=xtb (dlopen libxtb_engine.so). Native -Dwith_xtb stays available.
+     std::cerr
