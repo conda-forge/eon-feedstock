@@ -1,0 +1,45 @@
+diff -Naur a/client/potentials/Metatomic/MetatomicDynPot.cpp b/client/potentials/Metatomic/MetatomicDynPot.cpp
+--- a/client/potentials/Metatomic/MetatomicDynPot.cpp	2026-09-15 08:21:36.000000000 -0500
++++ b/client/potentials/Metatomic/MetatomicDynPot.cpp	2026-09-15 08:46:18.233173386 -0500
+@@ -4,6 +4,7 @@
+ ** SPDX-License-Identifier: BSD-3-Clause
+ */
+ #include "eon/potentials/Metatomic/MetatomicDynPot.h"
++#include "eon/Parameters.h"
+ #include "eon/potentials/Metatomic/MetatomicLoader.h"
+ 
+ #include <array>
+diff -Naur a/client/potentials/Rgpot/RgpotPot.cpp b/client/potentials/Rgpot/RgpotPot.cpp
+--- a/client/potentials/Rgpot/RgpotPot.cpp	2026-09-15 08:21:36.000000000 -0500
++++ b/client/potentials/Rgpot/RgpotPot.cpp	2026-09-15 08:46:18.232285881 -0500
+@@ -2,6 +2,7 @@
+ ** This file is part of eOn.
+ */
+ #include "eon/potentials/Rgpot/RgpotPot.h"
++#include "eon/Parameters.h"
+ #include "eon/potentials/Rgpot/RGPotEngine.h"
+ 
+ #include <algorithm>
+diff -Naur a/include/eon/potentials/LAMMPS/LammpsLoader.h b/include/eon/potentials/LAMMPS/LammpsLoader.h
+--- a/include/eon/potentials/LAMMPS/LammpsLoader.h	2026-09-15 08:21:36.000000000 -0500
++++ b/include/eon/potentials/LAMMPS/LammpsLoader.h	2026-09-15 08:46:18.232925487 -0500
+@@ -99,8 +99,6 @@
+ 
+   void ensure_loaded();
+ 
+-  void ensure_loaded();
+-
+   bool m_loaded{false};
+   bool m_tried{false};
+   dynlib::Handle m_handle{};
+diff -Naur a/include/eon/potentials/XTBPot/XTBPot.h b/include/eon/potentials/XTBPot/XTBPot.h
+--- a/include/eon/potentials/XTBPot/XTBPot.h	2026-09-15 08:21:36.000000000 -0500
++++ b/include/eon/potentials/XTBPot/XTBPot.h	2026-09-15 08:46:18.232665648 -0500
+@@ -11,6 +11,7 @@
+ */
+ #pragma once
+ 
++#include "eon/Parameters.h"
+ #include "eon/Potential.h"
+ #include "units.hpp"
+ #include "xtb.h"

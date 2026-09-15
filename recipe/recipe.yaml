@@ -11,6 +11,7 @@ source:
     sha256: cb4a0f4a227d8cfb251ce7b95b77ceefaa82d17140833b9152350e4c96383377
     patches:
       - 0001-win-msvc-capnp-fi-after-project.patch
+      - 0002-plugin-params-include.patch
     # v2.16.0 targets readcon-core 0.13 in-tree (IoStatus API); the 0.12
     # builder-API patch (use_readcon_pkgconfig.patch) is upstream and dropped.
   - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v3.2.0.tar.gz
