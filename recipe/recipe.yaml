@@ -30,7 +30,7 @@ build:
   # under subprojects/rgpot. with_fortran / with_cuh2 select potentials now.
   # build.bat still forces MSVC AR=lib (not llvm-ar from flang), which is
   # what those kernels need to link (issue #15).
-  number: 0
+  number: 1
 requirements:
   build:
     - ${{ compiler('c') }}
@@ -84,8 +84,7 @@ requirements:
         - libcblas * *mkl
         - liblapack * *mkl
         - liblapacke * *mkl
-    - if: not win
-      then:
+      else:
         - libblas
         - libcblas
         - liblapack
@@ -109,21 +108,19 @@ requirements:
 tests:
   - if: (build_platform == target_platform)
     then:
-      script:
-        - python -c "import eon"
-      requirements:
-        run:
-          - libtorch *cpu*
-  - if: (build_platform == target_platform)
-    then:
-      script:
-        - eonclient -h
-        - eonclient --version
+      - script:
+          - python -c "import eon"
+        requirements:
+          run:
+            - libtorch *cpu*
+      - script:
+          - eonclient -h
+          - eonclient --version
         # Windows builds are static + no in-tree Fortran; binary must still run.
-        - python -c "import eon; import sys; print('eon ok', sys.platform)"
-      requirements:
-        run:
-          - libtorch *cpu*
+          - python -c "import eon; import sys; print('eon ok', sys.platform)"
+        requirements:
+          run:
+            - libtorch *cpu*
 
 
 about:
