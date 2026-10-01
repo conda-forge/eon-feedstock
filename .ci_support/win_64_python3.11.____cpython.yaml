@@ -3,15 +3,19 @@ c_compiler:
 c_stdlib:
 - vs
 capnproto:
-- 1.4.0
+- 1.5.0
 channel_sources:
 - conda-forge
 channel_targets:
 - conda-forge main
 cxx_compiler:
 - vs2022
+fortran_compiler:
+- flang
+fortran_compiler_version:
+- '22'
 libtorch:
-- '2.12'
+- '2.13'
 numpy:
 - '2'
 pin_run_as_build:
