@@ -1,5 +1,5 @@
 context:
-  version: "3.2.1"
+  version: "3.5.0"
 
 package:
   name: eon
@@ -8,7 +8,7 @@ package:
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
     # Published asset from TheochemUI/eOn v3.2.1 (release.yml fat tarball).
-    sha256: 85b5ed37659c6183cad6a15b41507217f8d5c5807d8a2b79c13fcbbfdc8c18f1
+    sha256: 2af417ab5eb2870e0447cbcef0fda89c58bcbd62c151b31bb012efd20e0321ff
     patches:
       - 0001-win-msvc-capnp-fi-after-project.patch
     # v2.16.0 targets readcon-core 0.13 in-tree (IoStatus API); the 0.12
@@ -84,8 +84,7 @@ requirements:
         - libcblas * *mkl
         - liblapack * *mkl
         - liblapacke * *mkl
-    - if: not win
-      then:
+      else:
         - libblas
         - libcblas
         - liblapack
@@ -109,21 +108,19 @@ requirements:
 tests:
   - if: (build_platform == target_platform)
     then:
-      script:
-        - python -c "import eon"
-      requirements:
-        run:
-          - libtorch *cpu*
-  - if: (build_platform == target_platform)
-    then:
-      script:
-        - eonclient -h
-        - eonclient --version
+      - script:
+          - python -c "import eon"
+        requirements:
+          run:
+            - libtorch *cpu*
+      - script:
+          - eonclient -h
+          - eonclient --version
         # Windows builds are static + no in-tree Fortran; binary must still run.
-        - python -c "import eon; import sys; print('eon ok', sys.platform)"
-      requirements:
-        run:
-          - libtorch *cpu*
+          - python -c "import eon; import sys; print('eon ok', sys.platform)"
+        requirements:
+          run:
+            - libtorch *cpu*
 
 
 about:
