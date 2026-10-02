@@ -27,7 +27,7 @@ build:
   # under subprojects/rgpot. with_fortran / with_cuh2 select potentials now.
   # build.bat still forces MSVC AR=lib (not llvm-ar from flang), which is
   # what those kernels need to link (issue #15).
-  number: 0
+  number: 1
 requirements:
   build:
     - ${{ compiler('c') }}
