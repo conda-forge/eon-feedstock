@@ -41,13 +41,13 @@ if defined CARGO_BUILD_TARGET (
 if errorlevel 1 (popd & exit 1)
 popd
 
-:: Tag v0.14.10 left Cargo.toml at 0.14.9; eOn 3.2.1 meson wants >=0.14.10.
+:: v0.16.0 Cargo.toml is 0.16.0. eOn 3.5.0 meson wants >=0.16.0.
 set "READCON_PC=%LIBRARY_PREFIX%\lib\pkgconfig\readcon-core.pc"
 if not exist "%READCON_PC%" (
     echo ERROR: %READCON_PC% missing after cargo cinstall
     exit 1
 )
-python -c "from pathlib import Path; p=Path(r'%READCON_PC%'); t=p.read_text(); old,new='Version: 0.14.9','Version: 0.14.10'; missing=old not in t; p.write_text(t.replace(old,new,1)) if not missing else None; raise SystemExit('missing Version 0.14.9 in '+str(p) if missing else 0)"
+python -c "from pathlib import Path; p=Path(r'%READCON_PC%'); t=p.read_text(); needle='Version: 0.16.0'; raise SystemExit(0 if needle in t else 'missing '+needle+' in '+str(p))"
 if errorlevel 1 exit 1
 
 set "PKG_CONFIG_PATH=%LIBRARY_LIB%\pkgconfig;%PKG_CONFIG_PATH%"
@@ -167,6 +167,7 @@ if exist "%LIBRARY_LIB%\metatomic_torch.lib" (
 :: In-tree Fortran ON including CuH2 (issue #15). Static default-library; MSVC AR above.
 meson setup -Dpython.install_env=prefix ^
     --native-file="%SRC_DIR%\native-msvc.ini" ^
+    --force-fallback-for=nlohmann_json ^
     --prefix="%PREFIX%" ^
     --default-library=static ^
     -Dwith_metatomic=True ^
