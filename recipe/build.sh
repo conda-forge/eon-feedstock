@@ -113,6 +113,7 @@ EOF
 
 meson setup -Dpython.install_env=prefix \
     --native-file native.ini \
+    --force-fallback-for=nlohmann_json \
     --pkg-config-path="${PREFIX}/lib/pkgconfig" \
     -Dwith_metatomic=True \
     -Dwith_xtb=True \

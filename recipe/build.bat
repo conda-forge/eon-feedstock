@@ -167,6 +167,7 @@ if exist "%LIBRARY_LIB%\metatomic_torch.lib" (
 :: In-tree Fortran ON including CuH2 (issue #15). Static default-library; MSVC AR above.
 meson setup -Dpython.install_env=prefix ^
     --native-file="%SRC_DIR%\native-msvc.ini" ^
+    --force-fallback-for=nlohmann_json ^
     --prefix="%PREFIX%" ^
     --default-library=static ^
     -Dwith_metatomic=True ^
