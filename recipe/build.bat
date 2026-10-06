@@ -41,7 +41,7 @@ if defined CARGO_BUILD_TARGET (
 if errorlevel 1 (popd & exit 1)
 popd
 
-:: v0.16.0 Cargo.toml is 0.16.0. eOn 3.5.0 meson wants >=0.16.0.
+:: v0.16.0 Cargo.toml is 0.16.0. eOn 3.6.0 meson wants >=0.16.0.
 set "READCON_PC=%LIBRARY_PREFIX%\lib\pkgconfig\readcon-core.pc"
 if not exist "%READCON_PC%" (
     echo ERROR: %READCON_PC% missing after cargo cinstall
@@ -131,8 +131,8 @@ if not defined FLANG_RT_DIR (
     )
 )
 
-:: Cap'n Proto /FI is in 0001-win-msvc-capnp-fi-after-project.patch
-:: (add_project_arguments after project()). Do not put /FI in CXXFLAGS:
+:: Cap'n Proto /FI is in the 3.6.0 tree (msvc_capnp_guard.h, after project()).
+:: Do not put /FI in CXXFLAGS:
 :: Meson applies CXXFLAGS to the cl.exe sanity check; /FID:/... (drive letter)
 :: makes Meson 1.12 report "Compiler cl.exe cannot compile programs."
 set "CXXFLAGS=%CXXFLAGS% /DNOMINMAX /DWIN32_LEAN_AND_MEAN"

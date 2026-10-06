@@ -1,5 +1,5 @@
 context:
-  version: "3.5.0"
+  version: "3.6.0"
 
 package:
   name: eon
@@ -7,16 +7,14 @@ package:
 
 source:
   - url: https://github.com/TheochemUI/eOn/releases/download/v${{ version }}/eon-v${{ version }}.tar.xz
-    # Published asset from TheochemUI/eOn v3.5.0 (release.yml fat tarball).
-    sha256: 2af417ab5eb2870e0447cbcef0fda89c58bcbd62c151b31bb012efd20e0321ff
-    patches:
-      - 0001-win-msvc-capnp-fi-after-project.patch
-  - url: https://github.com/OmniPotentRPC/rgpot/archive/refs/tags/v3.4.0.tar.gz
-    sha256: 29ebcab04647063f51ff793bad40788556a93d6e0a8b100b4f189ac00c3e134e
+    # Published asset from TheochemUI/eOn v3.6.0 (release.yml fat tarball).
+    sha256: 5e9008c6926b78563ee90f17189c4ad371314ddc02ac559ccec50a0e85d9bd7e
+  - url: https://github.com/OmniPotentRPC/rgpot/archive/004707295af9253047129a723ae79f0c1bc5afa2.tar.gz
+    sha256: 686b8276c85b09d75aeed8c241e2308e13f44c192c24d20156615e43809bd040
     target_directory: subprojects/rgpot
-    # eOn 3.5.0 wrap is rgpot v3.4.0 (CalculatorGroup.hpp).
+    # eOn 3.6.0 wrap revision after 3.4.0 (librgpot loads MPI on demand).
   # readcon-core C-API built with cargo-c; crate deps resolve from crates.io
-  # pinned by the upstream Cargo.lock. eOn 3.5.0 requires >= 0.16.0.
+  # pinned by the upstream Cargo.lock. eOn 3.6.0 requires >= 0.16.0.
   - url: https://github.com/lode-org/readcon-core/archive/refs/tags/v0.16.0.tar.gz
     sha256: e555f67a2f5bcb751f6340829696fe26c1b57d056f798a032435a7c3552aa7e6
     target_directory: readcon-core-src

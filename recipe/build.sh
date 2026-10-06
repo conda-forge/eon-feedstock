@@ -64,7 +64,7 @@ fi
         --pkgconfigdir lib/pkgconfig
 )
 
-# v0.16.0 Cargo.toml is 0.16.0, so cargo-c writes that version. eOn 3.5.0
+# v0.16.0 Cargo.toml is 0.16.0, so cargo-c writes that version. eOn 3.6.0
 # meson requires >=0.16.0. Refuse a stamp meson will reject.
 pc="${PREFIX}/lib/pkgconfig/readcon-core.pc"
 if [[ ! -f "${pc}" ]]; then
