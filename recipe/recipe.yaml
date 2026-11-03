@@ -25,7 +25,7 @@ build:
   # under subprojects/rgpot. with_fortran / with_cuh2 select potentials now.
   # build.bat still forces MSVC AR=lib (not llvm-ar from flang), which is
   # what those kernels need to link (issue #15).
-  number: 0
+  number: 1
 requirements:
   build:
     - ${{ compiler('c') }}
@@ -49,9 +49,13 @@ requirements:
     - meson
     - pkg-config
     - sccache
+    # meson is noarch, so the python it pulls in would resolve to the newest
+    # release. On win, find_installation('python.exe') picks up that build
+    # python and meson takes the site-packages scheme from it, so it needs
+    # the variant pin (python 3.15 on win installs to lib\python\...).
+    - python
     - if: (build_platform != target_platform)
       then:
-        - python
         - cross-python_${{ target_platform }}
     - capnproto
     - if: osx
@@ -105,6 +109,9 @@ tests:
     then:
       - script:
           - python -c "import eon"
+          - if: win
+            then:
+              - python -c "import os, sysconfig, eon; got = os.path.normcase(os.path.dirname(os.path.dirname(os.path.realpath(eon.__file__)))); want = os.path.normcase(os.path.realpath(sysconfig.get_path('purelib'))); assert got == want, (got, want)"
         requirements:
           run:
             - libtorch *cpu*
